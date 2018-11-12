@@ -4,21 +4,6 @@
  Description
      This file contains macro definitions that are edited by the user to
      adapt the Events and Services framework to a particular application.
- Notes
-
- History
- When           Who     What/Why
- -------------- ---     --------
- 12/19/16 20:19  jec     removed EVENT_CHECK_HEADER definition. This goes with
-                         the V2.3 move to a single wrapper for event checking
-                         headers
-  10/11/15 18:00 jec     added new event type ES_SHORT_TIMEOUT
-  10/21/13 20:54 jec     lots of added entries to bring the number of timers
-                         and services up to 16 each
- 08/06/13 14:10 jec      removed PostKeyFunc stuff since we are moving that
-                         functionality out of the framework and putting it
-                         explicitly into the event checking functions
- 01/15/12 10:03 jec      started coding
 *****************************************************************************/
 
 #ifndef ES_CONFIGURE_H
@@ -41,11 +26,11 @@
 // services are added in numeric sequence (1,2,3,...) with increasing
 // priorities
 // the header file with the public function prototypes
-#define SERV_0_HEADER "TestHarnessService0.h"
+#define SERV_0_HEADER "GameManager.h"
 // the name of the Init function
-#define SERV_0_INIT InitTestHarnessService0
+#define SERV_0_INIT InitGameManager
 // the name of the run function
-#define SERV_0_RUN RunTestHarnessService0
+#define SERV_0_RUN RunGameManager
 // How big should this services Queue be?
 #define SERV_0_QUEUE_SIZE 5
 
@@ -258,11 +243,13 @@ typedef enum
   ES_INIT,                  /* used to transition from initial pseudo-state */
   ES_TIMEOUT,               /* signals that the timer has expired */
   ES_SHORT_TIMEOUT,         /* signals that a short timer has expired */
+
   /* User-defined events start here */
-  ES_NEW_KEY,               /* signals a new key received from terminal */
-  ES_LOCK,
-  ES_UNLOCK
-}ES_EventType_t;
+  LEAF_SWITCH_CLOSED,
+  LEAF_SWITCH_OPEN,
+  PLAY_WELCOMING_AUDIO,
+  WELCOMING_AUDIO_DONE
+} ES_EventType_t;
 
 /****************************************************************************/
 // These are the definitions for the Distribution lists. Each definition
@@ -296,7 +283,7 @@ typedef enum
 
 /****************************************************************************/
 // This is the list of event checking functions
-#define EVENT_CHECK_LIST Check4Keystroke
+#define EVENT_CHECK_LIST CheckLEAFSwitch
 
 /****************************************************************************/
 // These are the definitions for the post functions to be executed when the
