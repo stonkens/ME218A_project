@@ -9,6 +9,8 @@
  History
  When           Who     What/Why
  -------------- ---     --------
+ 11/12/18 10:01  ston    Added in 1 service (MeatSwitch) and 1 SM (SolarPanel)
+                         and respective events
  12/19/16 20:19  jec     removed EVENT_CHECK_HEADER definition. This goes with
                          the V2.3 move to a single wrapper for event checking
                          headers
@@ -41,11 +43,11 @@
 // services are added in numeric sequence (1,2,3,...) with increasing
 // priorities
 // the header file with the public function prototypes
-#define SERV_0_HEADER "TestHarnessService0.h"
+#define SERV_0_HEADER "MeatSwitchDebounce.h"
 // the name of the Init function
-#define SERV_0_INIT InitTestHarnessService0
+#define SERV_0_INIT InitMeatSwitchDebounce
 // the name of the run function
-#define SERV_0_RUN RunTestHarnessService0
+#define SERV_0_RUN RunMeatSwitchDebounceSM
 // How big should this services Queue be?
 #define SERV_0_QUEUE_SIZE 5
 
@@ -260,8 +262,8 @@ typedef enum
   ES_SHORT_TIMEOUT,         /* signals that a short timer has expired */
   /* User-defined events start here */
   ES_NEW_KEY,               /* signals a new key received from terminal */
-  ES_LOCK,
-  ES_UNLOCK
+  DB_MEAT_SWITCH_DOWN,
+  DB_MEAT_SWITCH_UP
 }ES_EventType_t;
 
 /****************************************************************************/
@@ -296,7 +298,7 @@ typedef enum
 
 /****************************************************************************/
 // This is the list of event checking functions
-#define EVENT_CHECK_LIST Check4Keystroke
+#define EVENT_CHECK_LIST CheckMeatSwitchEvents
 
 /****************************************************************************/
 // These are the definitions for the post functions to be executed when the
@@ -305,7 +307,7 @@ typedef enum
 // Unlike services, any combination of timers may be used and there is no
 // priority in servicing them
 #define TIMER_UNUSED ((pPostFunc)0)
-#define TIMER0_RESP_FUNC TIMER_UNUSED
+#define TIMER0_RESP_FUNC PostMeatSwitchDebounce
 #define TIMER1_RESP_FUNC TIMER_UNUSED
 #define TIMER2_RESP_FUNC TIMER_UNUSED
 #define TIMER3_RESP_FUNC TIMER_UNUSED
@@ -329,7 +331,7 @@ typedef enum
 // the timer number matches where the timer event will be routed
 // These symbolic names should be changed to be relevant to your application
 
-#define SERVICE0_TIMER 15
+#define DEBOUNCE_TIMER 0
 
 /**************************************************************************/
 // uncomment this ine to get some basic framework operation debugging on
