@@ -163,7 +163,6 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       
       if(ThisEvent.EventType == ES_INIT)
       {
-        //printf("Finished ES_INIT \r\n");
 				CurrentEnergyState = EnergyStandBy;
       }
     break;
@@ -171,7 +170,6 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
     
     case EnergyStandBy:
     {
-      //printf("In CalWaitForRise");
       if(ThisEvent.EventType == ES_ENERGY_GAME_START)
       {
         //post event to game service to 
@@ -191,22 +189,49 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       {
         //Initiate 5 s timer
         //Move sun to new position by calling that service
+        //Change V_sun by one iteration
+      }
+      else if(ThisEvent.EventType == ES_TOWER_PLUGGED)
+      {
+        //post event to do the following:
+        //1. Stop coalplant audio
+        //2. Turn off polution leds
+        //3. Turn off energy leds with parameter all
+        //Call EvaluateAlignment to check alignment solar panel
+        CurrentEnergyState = SolarPowered
+      }
+      else if((ThisEvent.EventType == ES_AUDIO_END) && (ThisEvent.EventParam == COAL_AUDIO))
+      {
+        //1. Play coalplant audio
       }
     break;
     }
 
-    case EOC_WaitRise:
+    case SolarPowered:
     {
-      if(ThisEvent.EventType == ES_RISING_EDGE)
+      if(ThisEvent.EventType == ES_TOWER_UNPLUGGED)
 			{
-        TimeOfLastRise = ThisEvent.EventParam;
-        CurrentEnergyState = EOC_WaitFall;
-        CharacterizeSpace();  
+        //1. Play coalplant audio
+        //2. Turn on polution leds
+        //3. Turn on energy leds with parameter all 
+        CurrentEnergyState = CoalPowered;
 			}
-      else if(ThisEvent.EventType == DB_BUTTON_DOWN)
+      else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SUN_POSITION_TIMER))
       {
-        CurrentEnergyState = CalWaitForRise;
-        FirstDelta = 0;
+        //Initiate 5 s timer
+        //Move sun to new position by calling that service
+        //Change V_sun by one iteration
+        //Call EvaluateAlignment to check alignment solar panel
+      }
+      else if((ThisEvent.EventType == ES_SOLARPOS_CHANGE))
+      {
+        //Call EvaluateAlignment to check alignment solar panel
+      }
+      else if((ThisEvent.EventType == ES_RESET_ALL_GAMES))
+      {
+        //Move sun to initial position by calling that service
+        CurrentEnergyState = EnergyStandBy
+        //EnergyStandBy or InitEnergyGame
       }
     break;
     }
