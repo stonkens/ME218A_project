@@ -245,10 +245,15 @@ typedef enum
   ES_SHORT_TIMEOUT,         /* signals that a short timer has expired */
 
   /* User-defined events start here */
-  LEAF_SWITCH_CLOSED,
-  LEAF_SWITCH_OPEN,
+  LEAF_REMOVED,
+  LEAF_IN_CORRECT,
+  LEAF_IN_INCORRECT,
   PLAY_WELCOMING_AUDIO,
-  WELCOMING_AUDIO_DONE
+  WELCOMING_AUDIO_DONE,
+  START_GAME,
+  USER_INPUT_DETECTED,
+  CHANGE_TEMP,
+  RESET_ALL_GAMES
 } ES_EventType_t;
 
 /****************************************************************************/
@@ -257,7 +262,7 @@ typedef enum
 // services are on that distribution list.
 #define NUM_DIST_LISTS 1
 #if NUM_DIST_LISTS > 0
-#define DIST_LIST0 PostTestHarnessService0, PostTestHarnessService0
+#define DIST_LIST0 PostEnergyGame, PostMeatGame, PostVotingGame
 #endif
 #if NUM_DIST_LISTS > 1
 #define DIST_LIST1 PostTestHarnessService1, PostTestHarnessService1
@@ -283,7 +288,7 @@ typedef enum
 
 /****************************************************************************/
 // This is the list of event checking functions
-#define EVENT_CHECK_LIST CheckLEAFSwitch
+#define EVENT_CHECK_LIST CheckLEAFInsertion
 
 /****************************************************************************/
 // These are the definitions for the post functions to be executed when the
@@ -292,9 +297,9 @@ typedef enum
 // Unlike services, any combination of timers may be used and there is no
 // priority in servicing them
 #define TIMER_UNUSED ((pPostFunc)0)
-#define TIMER0_RESP_FUNC TIMER_UNUSED
-#define TIMER1_RESP_FUNC TIMER_UNUSED
-#define TIMER2_RESP_FUNC TIMER_UNUSED
+#define TIMER0_RESP_FUNC PostGameManager
+#define TIMER1_RESP_FUNC PostGameManager
+#define TIMER2_RESP_FUNC PostGameManager
 #define TIMER3_RESP_FUNC TIMER_UNUSED
 #define TIMER4_RESP_FUNC TIMER_UNUSED
 #define TIMER5_RESP_FUNC TIMER_UNUSED
@@ -316,7 +321,9 @@ typedef enum
 // the timer number matches where the timer event will be routed
 // These symbolic names should be changed to be relevant to your application
 
-#define SERVICE0_TIMER 15
+#define 10S_TIMER 0
+#define 30S_TIMER 1
+#define 60S_TIMER 2
 
 /**************************************************************************/
 // uncomment this ine to get some basic framework operation debugging on

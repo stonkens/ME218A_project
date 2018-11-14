@@ -14,8 +14,7 @@
 typedef enum {
     InitPState,
     Standby,
-    LEAFInserted,
-    Startup,
+    WelcomeMode,
     GameActive
 } GameManagerState;
 
