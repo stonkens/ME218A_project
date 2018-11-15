@@ -80,7 +80,7 @@ static EnergyGameState CurrentEnergyState;
 static uint16_t LastSolarPanelVoltage;
 static bool LastSmokeTowerState;
 static uint32_t V_sun = 4095;
-static uint32_t V_threshold = 100;
+static uint32_t V_threshold = 200;
 
 
 
@@ -122,6 +122,9 @@ bool InitEnergyProduction(uint8_t Priority)
 
   //Post Event ES_Init to EnergyProduction queue (this service)
   ThisEvent.EventType = ES_INIT;
+  PostEnergyProduction(ThisEvent);
+  //2 lines below are only for testing
+  ThisEvent.EventType = ES_ENERGY_GAME_START;
   PostEnergyProduction(ThisEvent);
   return true;
 }
@@ -184,18 +187,20 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
     {
     case InitEnergyGame:
     {
-      
+      puts("In InitEnergyGame \r\n");
       if(ThisEvent.EventType == ES_INIT)
       {
-		CurrentEnergyState = EnergyStandBy;
+        CurrentEnergyState = EnergyStandBy;
       }
     break;
     }
     
     case EnergyStandBy:
     {
+
       if(ThisEvent.EventType == ES_ENERGY_GAME_START)
       {
+        puts("Energy game started \r\n");
         //post event to game service to 
         //1. Play coalplant audio
         //2. turn on pollution leds
@@ -212,9 +217,11 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
  
     case CoalPowered:
     {
+      puts("The energy grid is coal powered \r\n");
       if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SUN_POSITION_TIMER))
       {
         //Move sun to new position by calling that service
+        puts("Sun to be moved, tower unplugged \r\n");
         MoveSunEvent.EventType = ES_MOVE_SUN;
         MoveSunEvent.EventParam = 0;
         PostSunMovement(MoveSunEvent);
@@ -225,6 +232,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       }
       else if(ThisEvent.EventType == ES_TOWER_PLUGGED)
       {
+        puts("Tower plugged, move to SolarPowered state \r\n");
         //post event to do the following:
         //1. Stop coalplant audio
         //2. Turn "low" polution leds
@@ -256,17 +264,19 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
     case SolarPowered:
     {
       if(ThisEvent.EventType == ES_TOWER_UNPLUGGED)
-	  {
+      {
+        puts("Tower unplugged, move to CoalPowered state \r\n");
         //1. Play coalplant audio
         //2. Turn on pollution leds
         SR_WritePollution(6);
         //3. turn on energy leds with parameter all
         SR_WriteEnergy(6);
         CurrentEnergyState = CoalPowered;
-	  }
+      }
       else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SUN_POSITION_TIMER))
       {
         //Initiate 5 s timer
+        puts("Sun to be moved, tower plugged \r\n");
         ES_Timer_InitTimer(SUN_POSITION_TIMER, FIVE_SEC);
         //Move sun to new position by calling that service
         MoveSunEvent.EventType = ES_MOVE_SUN;
@@ -283,6 +293,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       }
       else if(ThisEvent.EventType == ES_SOLARPOS_CHANGE)
       {
+        puts("Solar panel moved, in tower plugged state \r\n");
         //Call EvaluateAlignment to check alignment solar panel
         energy_level = EvaluateSolarAlignment();
         SR_WriteEnergy(2*energy_level);
@@ -333,14 +344,16 @@ bool CheckSolarPanelPosition(void)
   //If the state of the Morse input line has changed
   if(abs(CurrentSolarPanelVoltage-LastSolarPanelVoltage) >= V_threshold)
   {
+    puts("Solarpanel position changed by threshold \r\n");
   	ThisEvent.EventType = ES_SOLARPOS_CHANGE;
   	PostEnergyProduction(ThisEvent);
   	AnyEvent.EventType = ES_USERMVT_DETECTED;
   	//Post ES_USERMVT_DETECTED to game manager
   	//PostGameManager(AnyEvent);
     ReturnVal = true;
+    LastSolarPanelVoltage = CurrentSolarPanelVoltage;
   }
-  LastSolarPanelVoltage = CurrentSolarPanelVoltage;
+  
   return ReturnVal;
 }
 
@@ -423,6 +436,7 @@ static uint32_t ReadSolarPanelPosition(void)
   uint32_t SolarPanelPosition[1];
   //Read analog input pin 
   ADC_MultiRead(SolarPanelPosition); 
+  //printf("Solar panel position: %d \r\n", SolarPanelPosition[0]);
   return SolarPanelPosition[0];
 }
 
@@ -445,6 +459,7 @@ static uint32_t ReadSolarPanelPosition(void)
 ****************************************************************************/
 static void ChangeSunVoltage(void)
 {
+  puts("Varying V_sun \r\n");
 	V_sun = V_sun + V_INCREMENT_FIVE_SEC;
 	return;
 }
@@ -469,6 +484,7 @@ static void ChangeSunVoltage(void)
 ****************************************************************************/
 static uint8_t EvaluateSolarAlignment(void)
 {
+  puts("Varying V_sun \r\n");
 	uint8_t Alignment_param;
 	uint32_t V_solar = ReadSolarPanelPosition();
 	if(abs(V_sun - V_solar)<V_WELLALIGNED)
@@ -483,6 +499,7 @@ static uint8_t EvaluateSolarAlignment(void)
 	{
 		Alignment_param = 1;
 	}
+  printf("Good alignment: %d \r\n", Alignment_param);
 	return Alignment_param;
 }
 
