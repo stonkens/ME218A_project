@@ -53,11 +53,22 @@
 #define RCLK_LO BIT2LO
 #define RCLK_HI BIT2HI
 
-#define GET_LSB(x) (x & 0x0001)
+#define GET_LSB(x) (x & 0x000001)
 #define ALL_BITS (0xff<<2)
 
+#define SUN_MASK 0x0fffff
+#define ENERGY_MASK 0xf03fff
+#define POLLUTION_MASK 0xffc0ff
+#define TEMPERATURE_MASK 0xffff00
+
+#define SUN_POS 20
+#define ENERGY_POS 14
+#define POLLUTION_POS 8
+#define TEMPERATURE_POS 0
+
+
 //Private functions
-static uint32_t SetXBits(uint8_t NumberOfBits)
+static uint32_t SetXBits(uint8_t NumberOfBits);
 
 // image of the last 32 bits written to SR
 static uint32_t LocalRegisterImage=0;
@@ -83,7 +94,8 @@ static uint32_t UpdatedRegisterImage=0;
  Author
     Sander Tonkens, 10/23/18, 10:32
 ****************************************************************************/
-void SR_Init(void){
+void SR_Init(void)
+{
 
   // sets direction PB0, PB1 & PB2 as digital and output
   HWREG(GPIO_PORT + GPIO_O_DEN) |= (DATA_HI | SCLK_HI | RCLK_HI);
@@ -92,7 +104,7 @@ void SR_Init(void){
   // sets data & SCLK line low and RCLK line high
   HWREG(GPIO_PORT + (GPIO_O_DATA + ALL_BITS)) &= (DATA_LO & SCLK_LO);
   HWREG(GPIO_PORT + (GPIO_O_DATA + ALL_BITS)) |= RCLK_HI;
-  
+  return;
 }
 
 // returns last 8 bits sent to shift register
@@ -114,7 +126,8 @@ void SR_Init(void){
  Author
     Sander Tonkens, 10/23/18, 10:32
 ****************************************************************************/
-uint32_t SR_GetCurrentRegister(void){ 
+uint32_t SR_GetCurrentRegister(void)
+{ 
   // LocalRegisterImage is static so gets last 8 values of NewValue
   return LocalRegisterImage;
 }
@@ -137,14 +150,17 @@ uint32_t SR_GetCurrentRegister(void){
     Sander Tonkens, 10/23/18, 10:32
 ****************************************************************************/
 void SR_WriteSun(uint8_t NewValue)
+{
   //translate NewValue into bit state
   uint32_t SunBinary;
   SunBinary = SetXBits(NewValue);
-
   //update LEDs associated with Sun display+call SR_Write
   //UpdatedRegisterImage = ((LocalRegisterImage & SUN_MASK) | (BitState<<x)
-  //SR_Write(UpdatedRegisterImage)
+  UpdatedRegisterImage = ((LocalRegisterImage & SUN_MASK)) | (SunBinary<<SUN_POS);
 
+  SR_Write(UpdatedRegisterImage);
+  return;
+}
 /****************************************************************************
  Function
      SR_WritePollution
@@ -163,13 +179,15 @@ void SR_WriteSun(uint8_t NewValue)
     Sander Tonkens, 10/23/18, 10:32
 ****************************************************************************/
 void SR_WritePollution(uint8_t NewValue)
+{
   uint32_t PollutionBinary;
   PollutionBinary = SetXBits(NewValue);
-  //translate NewValue into bit state
   //update LEDs associated with Pollution display+call SR_Write
   //LocalRegisterImage = ((LocalRegisterImage & POLLUTION_MASK) | (BitState<<x)
-  //SR_Write(UpdatedRegisterImage)
-
+  UpdatedRegisterImage = ((LocalRegisterImage & POLLUTION_MASK)) | (PollutionBinary<<POLLUTION_POS);
+  SR_Write(UpdatedRegisterImage);
+  return;
+}
 
 /****************************************************************************
  Function
@@ -189,13 +207,16 @@ void SR_WritePollution(uint8_t NewValue)
     Sander Tonkens, 10/23/18, 10:32
 ****************************************************************************/
 void SR_WriteEnergy(uint8_t NewValue)
+{
   //translate NewValue into bit state
   uint32_t EnergyBinary;
   EnergyBinary = SetXBits(NewValue);
 
   //update LEDs associated with Energy display+call SR_Write
-  //UpdatedRegisterImage = ((LocalRegisterImage & ENERGY_MASK) | (BitState<<x)
-  //SR_Write(UpdatedRegisterImage)
+  UpdatedRegisterImage = ((LocalRegisterImage & ENERGY_MASK)) | (EnergyBinary<<ENERGY_POS);
+  SR_Write(UpdatedRegisterImage);
+  return;
+}
 /****************************************************************************
  Function
      SR_WriteTemperature
@@ -214,14 +235,17 @@ void SR_WriteEnergy(uint8_t NewValue)
     Sander Tonkens, 10/23/18, 10:32
 ****************************************************************************/
 void SR_WriteTemperature(uint8_t NewValue)
+{
   //translate NewValue into bit state
   uint32_t TemperatureBinary;
   TemperatureBinary = SetXBits(NewValue);
   
   
   //update LEDs associated with Temperature display+call SR_Write
-  //UpdatedRegisterImage = ((LocalRegisterImage & ENERGY_MASK) | (TemperatureBinary<<x)
-  //SR_Write(UpdatedRegisterImage)
+  UpdatedRegisterImage = ((LocalRegisterImage & TEMPERATURE_MASK)) | (TemperatureBinary<<TEMPERATURE_POS);
+  SR_Write(UpdatedRegisterImage);
+  return;
+}
 /****************************************************************************
  Function
      SR_Write
@@ -268,6 +292,7 @@ void SR_Write(uint32_t NewValue){
   }
   // raise the register clock to latch the new data
   HWREG(GPIO_PORT+(GPIO_O_DATA+ALL_BITS)) |= RCLK_HI;
+  return;
   
 }
 

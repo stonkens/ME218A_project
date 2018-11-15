@@ -44,11 +44,10 @@
 /* include header files for the other modules that are referenced
 */
 #include "ShiftRegisterWrite.h"
+#include "GameManager.h"
 
 // flexibility defines
 #define GPIO_PORT GPIO_PORTB_BASE //configure B on electrical design
-#define PORT_HI BIT1HI //configure 1 (=B) on electrical design
-#define PORT_LO BIT1LO //configure 1 (=B) on electrical design
 
 //readability defines
 #define MEAT GPIO_PIN_3
@@ -86,12 +85,7 @@ bool InitMeatSwitchDebounce(uint8_t Priority)
 	ES_Event_t ThisEvent;
 
 	MyPriority = Priority;
-	//Initialize the port line to monitor the microswitch
-  	// set up port B
-  	HWREG(SYSCTL_RCGCGPIO) |= PORT_HI;
-  	while((HWREG(SYSCTL_RCGCGPIO) & PORT_HI) != PORT_HI)
-  	{
-  	}
+
     //Set MicroSwitch as digital input
   	HWREG(GPIO_PORT + GPIO_O_DEN) |= (MEAT_HI);
   	HWREG(GPIO_PORT + GPIO_O_DIR) &= (MEAT_LO);
@@ -157,7 +151,7 @@ ES_Event_t RunMeatSwitchDebounceSM(ES_Event_t ThisEvent)
 			//	If EventType is ES_TIMEOUT & parameter is debounce timer number
     		if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == DEBOUNCE_TIMER))
 			{
-					CurrentState = Ready2Sample;
+				CurrentState = Ready2Sample;
 			}
 			break;
 		}
@@ -202,6 +196,7 @@ ES_Event_t RunMeatSwitchDebounceSM(ES_Event_t ThisEvent)
 bool CheckMeatSwitchEvents(void)
 {
 	ES_Event_t ThisEvent;
+	ES_Event_t AnyEvent;
 	bool ReturnVal = false;
 	bool CurrentSwitchState;
 
@@ -216,6 +211,10 @@ bool CheckMeatSwitchEvents(void)
 		{
 			ThisEvent.EventType = DB_MEAT_SWITCH_DOWN;
 			PostMeatSwitchDebounce(ThisEvent);
+
+			AnyEvent.EventType = ES_USERMVT_DETECTED;
+  			//Post ES_USERMVT_DETECTED to game manager
+  			PostGameManager(AnyEvent);
 		}
 		else
 		{		
@@ -227,3 +226,9 @@ bool CheckMeatSwitchEvents(void)
 	return ReturnVal;
 }
 
+bool ReadMeatSwitchPress(void)
+{
+	bool SwitchState;
+	SwitchState = HWREG(GPIO_PORT + GPIO_O_DATA + ALL_BITS) & MEAT_HI;
+	return SwitchState;
+}

@@ -1,7 +1,7 @@
 // create your own header file comment block
 // and protect against multiple inclusions
-#ifndef SHIFTREGISTERWRITE_H
-#define SHIFTREGISTERWRITE_H
+#ifndef ShiftRegisterWrite_H
+#define ShiftRegisterWrite_H
 // the common headers for C99 types 
 #include <stdint.h>
 #include <stdbool.h>
@@ -39,13 +39,15 @@
 #define RCLK_LO BIT2LO
 #define RCLK_HI BIT2HI
 
-#define GET_LSB(x) (x & 0x0001)
+#define GET_LSB(x) (x & 0x000001)
+
+
 void SR_Init(void);
 uint32_t SR_GetCurrentRegister(void);
 void SR_Write(uint32_t NewValue);
-void SR_WritePollution(uint32_t NewValue)
-void SR_WriteSun(uint32_t NewValue)
-void SR_WriteEnergy(uint32_t NewValue)
-void SR_WriteTemperature(uint32_t NewValue)
+void SR_WritePollution(uint8_t NewValue);
+void SR_WriteSun(uint8_t NewValue);
+void SR_WriteEnergy(uint8_t NewValue);
+void SR_WriteTemperature(uint8_t NewValue);
 
 #endif 

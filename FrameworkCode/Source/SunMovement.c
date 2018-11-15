@@ -46,7 +46,7 @@
 
 
 // module level defines
-
+static uint8_t sun_position = 0;
 
 
 /****************************************************************************
@@ -123,17 +123,19 @@ ES_Event_t RunSunMovement(ES_Event_t ThisEvent)
   //Default return event
   ReturnEvent.EventType = ES_NO_EVENT;
 
-  static uint8_t sun_position = 0;
+  
 
   if(ThisEvent.EventType == ES_MOVE_SUN)
   {
     if(ThisEvent.EventParam == 0)
     {
       //Move sun by 1/12th of a day
+      //Update value of sun position
     }
     else if(ThisEvent.EventParam == 1)
     {
       //Return sun to its initial position
+      //Use current sun position value as the
     }
   }
   return ReturnEvent;

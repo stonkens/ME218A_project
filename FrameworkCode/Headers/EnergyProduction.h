@@ -20,6 +20,6 @@ bool InitEnergyProduction(uint8_t Priority);
 bool PostEnergyProduction(ES_Event_t ThisEvent);
 ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent);
 bool CheckSolarPanelPosition(void);
-bool CheckSmokeTowerEvents(void)
+bool CheckSmokeTowerEvents(void);
 
 #endif /* EnergyProduction_H */
