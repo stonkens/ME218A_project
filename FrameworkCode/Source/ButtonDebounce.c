@@ -23,18 +23,18 @@
 #include "ES_ShortTimer.h"
 
 #define DEBOUNCE_TIME 100
-#define YES_BUTTON_PORT BIT1HI;
-#define NO_BUTTON_PORT BIT0HI;
-#define SWITCH_PORT BIT2HI;
+#define YES_BUTTON_PORT BIT1HI
+#define NO_BUTTON_PORT BIT0HI
+#define SWITCH_PORT BIT2HI
 
 static uint8_t MyPriority;
 // use lines on Port D
-static const NumOfButtons = 3;
-static uint8_t ButtonPorts[] = {YES_BUTTON_PORT, NO_BUTTON_PORT, SWITCH_PORT};
+static const uint8_t NumOfButtons = 3;
+static uint8_t ButtonPorts[] = {YES_BUTTON_PORT, NO_BUTTON_PORT, SWITCH_HIT};
 static uint8_t ButtonLastStates[3];
 static ES_EventType_t Events2Post[] = {VOTED_YES, VOTED_NO, SWITCH_HIT};
 
-bool InitButtonDebounce(uint8_t MyPriority) {
+bool InitButtonDebounce(uint8_t Priority) {
     MyPriority = Priority;
     for (int i=0; i < NumOfButtons; i++) {
         // initialize port as digital
@@ -68,9 +68,13 @@ ES_Event_t RunButtonDebounce(ES_Event_t ThisEvent) {
 
     else if (ThisEvent.EventType == ES_TIMEOUT) {
         uint8_t ButtonNum = ThisEvent.EventParam - BUTTON_TIMER;
-        if ((TimerNum >= 0) && (TimerNum < NumOfButtons) {
-            printf("Button %d pressed; posting to voting game.\r\n", ButtonNum);            
-            PostVotingGame(Events2Post[ButtonNum]);
+        // if timer number is smaller than BUTTON_TIMER, ButtonNum becomes some
+        // large uint8_t exceed NumofButtons 
+        if (ButtonNum < NumOfButtons) {
+            printf("Button %d pressed; posting to voting game.\r\n", ButtonNum);
+            ES_Event_t Event2Post;
+            Event2Post.EventType = Events2Post[ButtonNum];
+            // PostVotingGame(Event2Post);
         }
     }
     return ReturnEvent;

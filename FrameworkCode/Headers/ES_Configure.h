@@ -257,7 +257,8 @@ typedef enum
   VOTED_YES,
   VOTED_NO,
   SWITCH_HIT,
-  BUTTON_DOWN
+  BUTTON_DOWN,
+  BUTTON_UP
 } ES_EventType_t;
 
 /****************************************************************************/
@@ -266,7 +267,7 @@ typedef enum
 // services are on that distribution list.
 #define NUM_DIST_LISTS 1
 #if NUM_DIST_LISTS > 0
-#define DIST_LIST0 PostEnergyGame, PostMeatGame, PostVotingGame
+#define DIST_LIST0 PostGameManager // PostEnergyGame, PostMeatGame, PostVotingGame
 #endif
 #if NUM_DIST_LISTS > 1
 #define DIST_LIST1 PostTestHarnessService1, PostTestHarnessService1
@@ -304,7 +305,7 @@ typedef enum
 #define TIMER0_RESP_FUNC PostGameManager
 #define TIMER1_RESP_FUNC PostGameManager
 #define TIMER2_RESP_FUNC PostGameManager
-#define TIMER3_RESP_FUNC PostVotingGame
+#define TIMER3_RESP_FUNC TIMER_UNUSED // PostVotingGame
 #define TIMER4_RESP_FUNC PostButtonDebounce
 #define TIMER5_RESP_FUNC PostButtonDebounce
 #define TIMER6_RESP_FUNC PostButtonDebounce
@@ -325,9 +326,9 @@ typedef enum
 // the timer number matches where the timer event will be routed
 // These symbolic names should be changed to be relevant to your application
 
-#define 10S_TIMER 0
-#define 30S_TIMER 1
-#define 60S_TIMER 2
+#define NEXT_GAME_TIMER 0
+#define USR_INPUT_TIMER 1
+#define GAME_END_TIMER 2
 #define VOTE_TIMER 3
 #define BUTTON_TIMER 4
 

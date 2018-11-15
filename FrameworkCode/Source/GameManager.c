@@ -11,8 +11,15 @@
 
 #include "GameManager.h"
 #include "ES_Framework.h"
-#include "ShiftRegisterWrite.h"
-#include "AudioService.h"
+
+// the headers to access the GPIO subsystem
+#include "inc/hw_memmap.h"
+#include "inc/hw_types.h"
+#include "inc/hw_gpio.h"
+#include "inc/hw_sysctl.h"
+
+// #include "ShiftRegisterWrite.h"
+// #include "AudioService.h"
 // include the header files of all games (need access to post functions)
 
 
@@ -63,8 +70,8 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
             if (ThisEvent.EventType == LEAF_IN_INCORRECT) {
                 puts("Reflectivity too high, LEAF inserted incorrectly.\r\n");
                 ES_Event_t Event2Post;
-                Event2Post.EventType = PLAY_LEAF_ERROR_AUDIO;
-                PostAudioService(Event2Post);
+                // Event2Post.EventType = PLAY_LEAF_ERROR_AUDIO;
+                // PostAudioService(Event2Post);
             }
             else if (ThisEvent.EventType == LEAF_IN_CORRECT) {
                 // play welcoming audio
@@ -72,7 +79,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 Event2Post.EventType = PLAY_WELCOMING_AUDIO;
                 // PostAudioService(Event2Post);
                 // turn on thermometer LEDs
-                SR_WriteTemperature(Temperature);
+                // SR_WriteTemperature(Temperature);
                 puts("LEAF inserted correctly. Going into welcome mode.\r\n");
                 CurrentState = WelcomeMode;                
             }
@@ -83,23 +90,23 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 ES_Event_t Event2Post;
                 Event2Post.EventType = START_GAME;
                 Event2Post.EventParam = 1;
-                PostEnergyGame(Event2Post);
+                // PostEnergyGame(Event2Post);
                 NumOfActiveGames ++;
                 puts("Starting first game.\r\n");
 
                 // start timers
-                ES_Timer_InitTimer(10S_TIMER, 10000);
-                ES_Timer_InitTimer(30S_TIMER, 30000);
-                ES_Timer_InitTimer(60S_TIMER, 60000);
+                ES_Timer_InitTimer(NEXT_GAME_TIMER, 10000);
+                ES_Timer_InitTimer(USR_INPUT_TIMER, 30000);
+                ES_Timer_InitTimer(GAME_END_TIMER, 60000);
                 CurrentState = GameActive;
             }
             else if (ThisEvent.EventType == LEAF_REMOVED) {
                 
                 // maybe add turn off all LED function to SR?
-                SR_WriteTemperature(0);
+                // SR_WriteTemperature(0);
 
                 ES_Event_t Event2Post;
-                Event2Post.EventType = STOP_WELCOMING_AUDIO;
+                // Event2Post.EventType = STOP_WELCOMING_AUDIO;
                 // PostAudioService(Event2Post);
                 CurrentState = Standby;
             }
@@ -107,32 +114,33 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
         case GameActive:
             if ((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
-                10S_TIMER)) {
+                NEXT_GAME_TIMER)) {
                 if (NumOfActiveGames < 3) {
                     NumOfActiveGames ++;
                     ES_Event_t Event2Post;
                     Event2Post.EventType = START_GAME;
                     if (NumOfActiveGames == 2) {
-                        ES_Timer_InitTimer(10S_TIMER, 10000);
+                        ES_Timer_InitTimer(NEXT_GAME_TIMER, 10000);
                         Event2Post.EventParam = 2;
-                        PostMeatGame(Event2Post)
+                        // PostMeatGame(Event2Post)
                         puts("10s timer expired: starting second game.\r\n");
                     }
                     else if (NumOfActiveGames == 3) {
                         Event2Post.EventParam = 3;
-                        PostVotingGame(Event2Post);
+                        // PostVotingGame(Event2Post);
                         puts("10s timer expired: starting third game.\r\n");
                     }
                 }
             }
 
             else if (((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
-                30S_TIMER)) || (ThisEvent.EventType == LEAF_REMOVED)) {
-                SR_WriteTemperature(0);
+                USR_INPUT_TIMER)) || (ThisEvent.EventType == LEAF_REMOVED)) {
+                puts("No user input detected for 30s, or LEAF removed. Resetting all games.\r\n");
+                // SR_WriteTemperature(0);
                 ES_Event_t Event2Post;
                 Event2Post.EventType = RESET_ALL_GAMES;
                 // post event to distribution list
-                ES_PostList00(ThisEvent);
+                // ES_PostList00(Event2Post);
             }
 
             // else if 60s timer expires

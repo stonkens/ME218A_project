@@ -5,6 +5,10 @@
 *
 ****************************************************************************************/
 
+#include "ES_Events.h"
+#include "ES_Types.h"
+#include "ES_Configure.h"
+
 typedef enum {
     InitPState,
     Standby,
