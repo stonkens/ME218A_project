@@ -124,7 +124,7 @@ uint32_t SR_GetCurrentRegister(void){
      SR_WriteSun
 
  Parameters
-    uint32_t, value to be written into Serial in/Parallel Out shift register
+    uint8_t NewValue, value to be written into Serial in/Parallel Out shift register
 
  Returns
     Nothing
@@ -136,12 +136,12 @@ uint32_t SR_GetCurrentRegister(void){
  Author
     Sander Tonkens, 10/23/18, 10:32
 ****************************************************************************/
-void SR_WriteSun(uint32_t NewValue)
+void SR_WriteSun(uint8_t NewValue)
   //translate NewValue into bit state
   uint32_t SunBinary;
   SunBinary = SetXBits(NewValue);
 
-  //update LEDs associated with Pollution display+call SR_Write
+  //update LEDs associated with Sun display+call SR_Write
   //UpdatedRegisterImage = ((LocalRegisterImage & SUN_MASK) | (BitState<<x)
   //SR_Write(UpdatedRegisterImage)
 
@@ -150,7 +150,7 @@ void SR_WriteSun(uint32_t NewValue)
      SR_WritePollution
 
  Parameters
-    uint32_t, value to be written into Serial in/Parallel Out shift register
+    uint8_t, value to be written into Serial in/Parallel Out shift register
 
  Returns
     Nothing
@@ -162,7 +162,7 @@ void SR_WriteSun(uint32_t NewValue)
  Author
     Sander Tonkens, 10/23/18, 10:32
 ****************************************************************************/
-void SR_WritePollution(uint32_t NewValue)
+void SR_WritePollution(uint8_t NewValue)
   uint32_t PollutionBinary;
   PollutionBinary = SetXBits(NewValue);
   //translate NewValue into bit state
@@ -176,7 +176,7 @@ void SR_WritePollution(uint32_t NewValue)
      SR_WriteEnergy
 
  Parameters
-    uint32_t, value to be written into Serial in/Parallel Out shift register
+    uint8_t, value to be written into Serial in/Parallel Out shift register
 
  Returns
     Nothing
@@ -188,7 +188,7 @@ void SR_WritePollution(uint32_t NewValue)
  Author
     Sander Tonkens, 10/23/18, 10:32
 ****************************************************************************/
-void SR_WriteEnergy(uint32_t NewValue)
+void SR_WriteEnergy(uint8_t NewValue)
   //translate NewValue into bit state
   uint32_t EnergyBinary;
   EnergyBinary = SetXBits(NewValue);
@@ -201,7 +201,7 @@ void SR_WriteEnergy(uint32_t NewValue)
      SR_WriteTemperature
 
  Parameters
-    uint32_t, value to be written into Serial in/Parallel Out shift register
+    uint8_t, value to be written into Serial in/Parallel Out shift register
 
  Returns
     Nothing
@@ -227,7 +227,7 @@ void SR_WriteTemperature(uint8_t NewValue)
      SR_Write
 
  Parameters
-    uint32_t, value to be written into Serial in/Parallel Out shift register
+    uint8_t, value to be written into Serial in/Parallel Out shift register
 
  Returns
     Nothing

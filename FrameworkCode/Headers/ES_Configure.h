@@ -35,7 +35,7 @@
 /****************************************************************************/
 // This macro determines that nuber of services that are *actually* used in
 // a particular application. It will vary in value from 1 to MAX_NUM_SERVICES
-#define NUM_SERVICES 1
+#define NUM_SERVICES 3
 
 /****************************************************************************/
 // These are the definitions for Service 0, the lowest priority service.
@@ -59,11 +59,11 @@
 // These are the definitions for Service 1
 #if NUM_SERVICES > 1
 // the header file with the public function prototypes
-#define SERV_1_HEADER "TestHarnessService1.h"
+#define SERV_1_HEADER "EnergyProduction.h"
 // the name of the Init function
-#define SERV_1_INIT InitTestHarnessService1
+#define SERV_1_INIT InitEnergyProduction
 // the name of the run function
-#define SERV_1_RUN RunTestHarnessService1
+#define SERV_1_RUN RunEnergyProductionSM
 // How big should this services Queue be?
 #define SERV_1_QUEUE_SIZE 3
 #endif
@@ -72,11 +72,11 @@
 // These are the definitions for Service 2
 #if NUM_SERVICES > 2
 // the header file with the public function prototypes
-#define SERV_2_HEADER "TestHarnessService2.h"
+#define SERV_2_HEADER "SunMovement.h"
 // the name of the Init function
-#define SERV_2_INIT InitTestHarnessService2
+#define SERV_2_INIT InitSunMovement
 // the name of the run function
-#define SERV_2_RUN RunTestHarnessService2
+#define SERV_2_RUN RunSunMovement
 // How big should this services Queue be?
 #define SERV_2_QUEUE_SIZE 3
 #endif
@@ -263,7 +263,15 @@ typedef enum
   /* User-defined events start here */
   ES_NEW_KEY,               /* signals a new key received from terminal */
   DB_MEAT_SWITCH_DOWN,
-  DB_MEAT_SWITCH_UP
+  DB_MEAT_SWITCH_UP,
+  ES_ENERGY_GAME_START, //name to be modified based on Connie's params
+  ES_TOWER_PLUGGED,
+  ES_TOWER_UNPLUGGED,
+  ES_AUDIO_END,
+  ES_RESET_ALL_GAMES, //name to be modified based on Connie's params
+  ES_SOLARPOS_CHANGE,
+  ES_MOVE_SUN
+
 }ES_EventType_t;
 
 /****************************************************************************/
@@ -298,7 +306,8 @@ typedef enum
 
 /****************************************************************************/
 // This is the list of event checking functions
-#define EVENT_CHECK_LIST CheckMeatSwitchEvents
+#define EVENT_CHECK_LIST CheckMeatSwitchEvents, CheckSolarPanelPosition,
+CheckSmokeTowerEvents
 
 /****************************************************************************/
 // These are the definitions for the post functions to be executed when the
@@ -308,7 +317,7 @@ typedef enum
 // priority in servicing them
 #define TIMER_UNUSED ((pPostFunc)0)
 #define TIMER0_RESP_FUNC PostMeatSwitchDebounce
-#define TIMER1_RESP_FUNC TIMER_UNUSED
+#define TIMER1_RESP_FUNC PostEnergyProduction
 #define TIMER2_RESP_FUNC TIMER_UNUSED
 #define TIMER3_RESP_FUNC TIMER_UNUSED
 #define TIMER4_RESP_FUNC TIMER_UNUSED
@@ -332,6 +341,7 @@ typedef enum
 // These symbolic names should be changed to be relevant to your application
 
 #define DEBOUNCE_TIMER 0
+#define SUN_POSITION_TIMER 1
 
 /**************************************************************************/
 // uncomment this ine to get some basic framework operation debugging on

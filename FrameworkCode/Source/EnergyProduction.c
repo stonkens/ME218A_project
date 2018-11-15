@@ -43,28 +43,23 @@
 /* include header files for the other modules that are referenced
 */
 #include "ShiftRegisterWrite.h"
+#include "SunMovement.h"
 
 #define ONE_SEC 1000
 #define FIVE_SEC (ONE_SEC*5)
+#define V_INCREMENT_FIVE_SEC 342 //To be changed
+
 
 // Private functions
-static void TestCalibration(void);
-static void CharacterizeSpace(void);
 static uint8_t ReadSolarPanelPosition(void);
 static bool ReadSmokeTowerIR(void)
 
 // module level defines
 static uint8_t MyPriority;
 static EnergyGameState CurrentEnergyState;
-static uint16_t TimeOfLastRise;
-static uint16_t TimeOfLastFall;
-static uint16_t LengthOfDot;
-static uint16_t FirstDelta;
-
-
 static uint16_t LastSolarPanelVoltage;
 static bool LastSmokeTowerState;
-
+static uint8_t V_sun;
 
 
 /****************************************************************************
@@ -96,6 +91,7 @@ bool InitEnergyProduction(uint8_t Priority)
   //Sample port line and use it to initialize the LastSolarPanelVoltage variable
   LastSolarPanelVoltage = ReadSolarPanelPosition();
   LastSmokeTowerState = ReadSmokeTowerIR();
+  V_sun = 4096; //pick value appropriately based on what the initial A/D value is
 
   CurrentEnergyState = InitEnergyGame;
   
@@ -128,8 +124,6 @@ bool PostEnergyProduction(ES_Event_t ThisEvent)
 }
 
 
-
-
 /****************************************************************************
  Function
      RunEnergyProductionSM
@@ -151,8 +145,12 @@ Parameters
 ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
 {
   ES_Event_t ReturnEvent;
+
   //Default return event
   ReturnEvent.EventType = ES_NO_EVENT;
+  ES_Event_t MoveSunEvent;
+  //Corresponds to number of LEDs to be on
+  uint8_t energy_level;
 
   //Based on the state of the CurrentEnergyState variable choose one of the 
   //following blocks of code:
@@ -163,7 +161,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       
       if(ThisEvent.EventType == ES_INIT)
       {
-				CurrentEnergyState = EnergyStandBy;
+		CurrentEnergyState = EnergyStandBy;
       }
     break;
     }
@@ -187,22 +185,41 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
     {
       if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SUN_POSITION_TIMER))
       {
-        //Initiate 5 s timer
         //Move sun to new position by calling that service
+        MoveSunEvent.EventType = ES_MOVE_SUN;
+        MoveSunEvent.EventParam = 0;
+        PostSunMovement(MoveSunEvent);
         //Change V_sun by one iteration
+        ChangeSunVoltage();
+        //Initiate 5 s timer
+        ES_Timer_InitTimer(SUN_POSITION_TIMER, FIVE_SEC);
       }
       else if(ThisEvent.EventType == ES_TOWER_PLUGGED)
       {
         //post event to do the following:
         //1. Stop coalplant audio
-        //2. Turn off polution leds
-        //3. Turn off energy leds with parameter all
+        //2. Turn "low" polution leds
+        SR_WritePollution(2*1);
+        //3. Turn "low" energy leds
+        SR_WriteEnergy(2*1);
         //Call EvaluateAlignment to check alignment solar panel
-        CurrentEnergyState = SolarPowered
+        energy_level = EvaluateSolarAlignment();
+        SR_WriteEnergy(2*energy_level);
+        CurrentEnergyState = SolarPowered;
       }
       else if((ThisEvent.EventType == ES_AUDIO_END) && (ThisEvent.EventParam == COAL_AUDIO))
       {
         //1. Play coalplant audio
+      }
+      else if((ThisEvent.EventType == ES_RESET_ALL_GAMES))
+      {
+      	//1. Stop playing coalplant audio directly
+      	//2. Function to reset sun to original position
+      	MoveSunEvent.EventType = ES_MOVE_SUN;
+      	MoveSunEvent.EventParam = 1;
+      	PostSunMovement(MoveSunEvent);
+      	CurrentEnergyState = EnergyStandBy;
+      	//CurrentEnergyState = InitEnergyGame
       }
     break;
     }
@@ -210,83 +227,40 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
     case SolarPowered:
     {
       if(ThisEvent.EventType == ES_TOWER_UNPLUGGED)
-			{
+	  {
         //1. Play coalplant audio
         //2. Turn on polution leds
         //3. Turn on energy leds with parameter all 
         CurrentEnergyState = CoalPowered;
-			}
+	  }
       else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SUN_POSITION_TIMER))
       {
         //Initiate 5 s timer
         //Move sun to new position by calling that service
         //Change V_sun by one iteration
+
         //Call EvaluateAlignment to check alignment solar panel
+        energy_level = EvaluateSolarAlignment();
+        //Write new value of EvaluateSolarAlignment to LEDs
+        //6 LEDs to represent 3 different levels, so *2
+        SR_WriteEnergy(2*energy_level);
+        
       }
       else if((ThisEvent.EventType == ES_SOLARPOS_CHANGE))
       {
         //Call EvaluateAlignment to check alignment solar panel
+        energy_level = EvaluateSolarAlignment();
+        SR_WriteEnergy(2*energy_level);
       }
       else if((ThisEvent.EventType == ES_RESET_ALL_GAMES))
       {
         //Move sun to initial position by calling that service
-        CurrentEnergyState = EnergyStandBy
+        CurrentEnergyState = EnergyStandBy;
         //EnergyStandBy or InitEnergyGame
+
       }
     break;
-    }
-
-    case EOC_WaitFall:
-    {
-      if(ThisEvent.EventType == ES_FALLING_EDGE)
-      {
-        TimeOfLastFall = ThisEvent.EventParam;
-        CurrentEnergyState = EOC_WaitRise;
-      }
-      else if(ThisEvent.EventType == DB_BUTTON_DOWN)
-      {
-        CurrentEnergyState = CalWaitForRise;
-        FirstDelta = 0;
-      }
-      else if(ThisEvent.EventType == ES_EOC_DETECTED)
-      {
-        CurrentEnergyState = DecodeWaitFall;
-      }
-    break;
-    }
-
-    case DecodeWaitRise:
-    {
-      if(ThisEvent.EventType == ES_RISING_EDGE)
-      {
-        TimeOfLastRise = ThisEvent.EventParam;
-        CurrentEnergyState = DecodeWaitFall;
-        CharacterizeSpace();          
-      }
-      else if (ThisEvent.EventType == DB_BUTTON_DOWN)
-      {
-        CurrentEnergyState = CalWaitForRise;
-        FirstDelta = 0;
-      }
-    break;
-    }
-
-    case DecodeWaitFall:
-    {
-      if(ThisEvent.EventType == ES_FALLING_EDGE)
-      {
-        TimeOfLastFall = ThisEvent.EventParam;
-        CurrentEnergyState = DecodeWaitRise;
-        CharacterizePulse();         
-      }
-      else if(ThisEvent.EventType == DB_BUTTON_DOWN)
-      {
-        CurrentEnergyState = CalWaitForRise;
-        FirstDelta = 0;
-      }
-      break;
-    }
-	
+    }	
   }
   return ReturnEvent;
 }
@@ -310,34 +284,21 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
 bool CheckSolarPanelPosition(void)
 {
   ES_Event_t ThisEvent;
+  ES_Event_t AnyEvent;
   bool ReturnVal = false;
-  uint16_t CurrentSolarPanelVoltage;
+  static uint16_t CurrentSolarPanelVoltage;
 
   //Get CurrentSolarPanelVoltage from input line
   CurrentSolarPanelVoltage = ReadSolarPanelPosition();
   
   //Analog signal, to be changed accordingly
   //If the state of the Morse input line has changed
-  if(abs(CurrentSolarPanelVoltage-ReferenceLastSolarPanelVoltage) <= V_threshold)
+  if(abs(CurrentSolarPanelVoltage-ReferenceLastSolarPanelVoltage) >= V_threshold)
   {
-    //If the current state of the input line is high
-    if(CurrentSolarPanelVoltage !=0)
-    {
-      //PostEvent RisingEdge with parameter of the Current Time
-      ThisEvent.EventType = ES_RISING_EDGE;
-      ThisEvent.EventParam = ES_Timer_GetTime();
-      PostEnergyProduction(ThisEvent);
-      //printf("R");
-    }
-
-    else
-    {
-      //PostEvent FallingEdge with parameter of the Current Time
-      ThisEvent.EventType = ES_FALLING_EDGE;
-      ThisEvent.EventParam = ES_Timer_GetTime();
-      PostEnergyProduction(ThisEvent);
-      //printf("F");
-    }
+  	ThisEvent.EventType = ES_SOLARPOS_CHANGE;
+  	PostEnergyProduction(ThisEvent);
+  	AnyEvent.EventType = ES_USERMVT_DETECTED;
+  	//Post ES_USERMVT_DETECTED to game manager
     ReturnVal = true;
   }
   LastSolarPanelVoltage = CurrentSolarPanelVoltage;
@@ -363,6 +324,7 @@ bool CheckSolarPanelPosition(void)
 bool CheckSmokeTowerEvents(void)
 {
   ES_Event_t ThisEvent;
+  ES_Event_t AnyEvent;
   bool ReturnVal = false;
   bool CurrentSmokeTowerState;
 
@@ -377,11 +339,15 @@ bool CheckSmokeTowerEvents(void)
     {
       ThisEvent.EventType = ES_TOWER_PLUGGED;
       PostEnergyProduction(ThisEvent);
+      AnyEvent.EventType = ES_USERMVT_DETECTED;
+      //Post ES_USERMVT_DETECTED to game manager
     }
     else
     {   
       ThisEvent.EventType = ES_TOWER_UNPLUGGED;
       PostEnergyProduction(ThisEvent);
+      AnyEvent.EventType = ES_USERMVT_DETECTED;
+      //Post ES_USERMVT_DETECTED to game manager
     }
   } 
   LastSmokeTowerState = CurrentSmokeTowerState;
@@ -393,122 +359,6 @@ bool CheckSmokeTowerEvents(void)
 //********************************
 // These functions are private to the module
 //********************************
-
-/****************************************************************************
- Function
-   TestCalibration
- Parameters
-   Nothing
- Returns
-   Nothing
- Description
-   Checks whether an acceptable dot length has been registered, posts event
- Notes
-   This implementation posts an event to PostEnergyProduction when Calibration is
-   completed
- Author
-   Sander Tonkens, 11/2/18, 19:39
-****************************************************************************/
-static void TestCalibration(void){
-
-	uint16_t SecondDelta;
-	ES_Event_t ThisEvent;
-  
-  //If calibration is just starting (FirstDelta is 0)
-	if(FirstDelta == 0)
-	{
-    //Set FirstDelta to most recent pulse width
-		FirstDelta = TimeOfLastFall - TimeOfLastRise;
-	}
-
-	else
-	{
-    //Set SecondDelta to most recent pulse width
-		SecondDelta = TimeOfLastFall - TimeOfLastRise;
-    
-    //FirstDelta represents valid dot length
-		if ((100.0*FirstDelta / SecondDelta) <= 33.33)
-		{
-      //Save FirstDelta as LengthOfDot
-			LengthOfDot = FirstDelta;
-      //CalCompleted, Post to EnergyProductionSM
-			ThisEvent.EventType = ES_CAL_COMPLETED;
-			PostEnergyProduction(ThisEvent);
-		}
-    
-		//SecondDelta represents valid dot length
-		else if ((100.0 * FirstDelta / SecondDelta) > 300.0)
-		{
-      //Save SecondDelta as LengthOfDot
-			LengthOfDot = SecondDelta;
-      //CalCompleted, Post to EnergyProductionSM
-			ThisEvent.EventType = ES_CAL_COMPLETED;
-			PostEnergyProduction(ThisEvent);
-		}
-    //Else (prepare for next pulse)
-		else
-		{
-      //Reiterate, until valid dot length has been identified
-			FirstDelta = SecondDelta;
-		}
-	}
-	return;
-}
-
-/****************************************************************************
- Function
-   CharacterizeSpace
- Parameters
-   Nothing
- Returns
-   Nothing
- Description
-   Checks for character spaces and end of word spaces
- Notes
-   This implementation posts an event to PostEnergyProduction when a valid or 
-   invalid space is detected
- Author
-   Sander Tonkens, 11/2/18, 19:39
-****************************************************************************/
-static void CharacterizeSpace(void){
-  uint16_t LastInterval;
-  ES_Event_t Event2Post;
-  
-  LastInterval = TimeOfLastRise - TimeOfLastFall;
-  
-  //LastInterval does not correspond to a dot space
-  if (LastInterval > 2 * LengthOfDot)
-  {
-    
-    //LastInterval corresponds to Character Space
-    if ((LastInterval >= (3*(LengthOfDot - 10))) && (LastInterval <= (3*(LengthOfDot +10))))
-    {
-      //printf("EOC");
-      Event2Post.EventType = ES_EOC_DETECTED;
-      PostEnergyProduction(Event2Post);
-      PostMorseDecode(Event2Post);
-    }
-    else
-    {
-      //LastInterval corresponds to word space
-      if((LastInterval >=(7*(LengthOfDot - 10))) && (LastInterval <= (7*(LengthOfDot +10))))
-      {
-        //printf("EOW");
-        Event2Post.EventType = ES_EOW_DETECTED;
-        PostEnergyProduction(Event2Post);
-        PostMorseDecode(Event2Post);
-      }
-      //LastInterval does not satisfy any requirements
-      else
-      {
-        Event2Post.EventType = ES_BAD_SPACE;
-        PostEnergyProduction(Event2Post);
-        PostMorseDecode(Event2Post); 
-      }
-    }
-  }
-  return;
-}  
 
 /****************************************************************************
  Function
@@ -537,13 +387,73 @@ static uint8_t ReadSolarPanelPosition(void)
 
 /****************************************************************************
  Function
+     V_sun
+
+ Parameters
+    Nothing
+
+ Returns
+    Nothing
+
+ Description
+    Function is called every time the sun is moved position
+ Notes
+      
+ Author
+    Sander Tonkens, 11/1/18, 10:32
+****************************************************************************/
+static void ChangeSunVoltage(void)
+{
+	V_sun = V_sun + V_INCREMENT_FIVE_SEC;
+	return;
+}
+
+/****************************************************************************
+ Function
+     EvaluateSolarAlignment
+
+ Parameters
+    Nothing
+
+ Returns
+    uint8_t Alignment_param, corresponds to number of energy leds to be 
+    turned on
+
+ Description
+    Function is called every time the sun is moved position
+ Notes
+      
+ Author
+    Sander Tonkens, 11/1/18, 10:32
+****************************************************************************/
+static uint8_t EvaluateSolarAlignment(void)
+{
+	uint8_t Alignment_param
+	uint8_t V_solar = ReadSolarPanelPosition();
+	if(abs(V_sun - V_solar)<V_wellaligned)
+	{
+		Alignment_param = 3;
+	}
+	else if(abs(V_sun - V_solar)<V_mediumaligned)
+	{
+		Alignment_param = 2;
+	}
+	else
+	{
+		Alignment_param = 1;
+	}
+	return Alignment_param;
+}
+
+/****************************************************************************
+ Function
      ReadSmokeTowerIR
 
  Parameters
     Nothing
 
  Returns
-    uint8_t returns state of 
+    bool returns state of SmokeTowerIR
 
  Description
     Returns bit 3 of the TIVA Port B, which reads state of morse coder
@@ -554,11 +464,13 @@ static uint8_t ReadSolarPanelPosition(void)
 ****************************************************************************/
 static bool ReadSmokeTowerIR(void)
 {
-  uint8_t SmokeTowerIRState=0;
+  bool SmokeTowerIRState=0;
   //Read digital input pin (as in Morselements)
   //SmokeTowerIRState = HWREG(GPIO_PORTB_BASE + (GPIO_O_DATA + ALL_BITS)) & BIT3HI;
   return SmokeTowerIRState;
 }
+
+
 
 
 
