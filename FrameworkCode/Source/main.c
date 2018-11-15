@@ -40,15 +40,7 @@ int main(void)
   TERMIO_Init();
   clrScrn();
 
-  // When doing testing, it is useful to announce just which program
-  // is running.
-  puts("\rStarting Test Harness for \r");
-  printf( "the 2nd Generation Events & Services Framework V2.4\r\n");
-  printf( "%s %s\n", __TIME__, __DATE__);
-  printf( "\n\r\n");
-  printf( "Press any key to post key-stroke events to Service 0\n\r");
-  printf( "Press 'd' to test event deferral \n\r");
-  printf( "Press 'r' to test event recall \n\r");
+  puts("\r Running Events and Services Framework \r\n");
 
   // reprogram the ports that are set as alternate functions or
   // locked coming out of reset. (PA2-5, PB2-3, PD7, PF0)
@@ -57,7 +49,11 @@ int main(void)
   // or assign to alternate any functions available on those pins
   PortFunctionInit();
 
-  // Your hardware initialization function calls go here
+  // hardware initialization
+  HWREG(SYSCTL_RCGCGPIO) |= BIT3HI; // Port D
+  while (!(HWREG(SYSCTL_PRGPIO) & BIT3HI));
+  HWREG(SYSCTL_RCGCGPIO) |= BIT5HI; // Port F
+  while (!(HWREG(SYSCTL_PRGPIO) & BIT5HI));
 
   // now initialize the Events and Services Framework and start it running
   ErrorType = ES_Initialize(ES_Timer_RATE_1mS);

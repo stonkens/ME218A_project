@@ -18,7 +18,7 @@
 /****************************************************************************/
 // This macro determines that nuber of services that are *actually* used in
 // a particular application. It will vary in value from 1 to MAX_NUM_SERVICES
-#define NUM_SERVICES 1
+#define NUM_SERVICES 2
 
 /****************************************************************************/
 // These are the definitions for Service 0, the lowest priority service.
@@ -42,11 +42,11 @@
 // These are the definitions for Service 1
 #if NUM_SERVICES > 1
 // the header file with the public function prototypes
-#define SERV_1_HEADER "TestHarnessService1.h"
+#define SERV_1_HEADER "ButtonDebounce.h"
 // the name of the Init function
-#define SERV_1_INIT InitTestHarnessService1
+#define SERV_1_INIT InitButtonDebounce
 // the name of the run function
-#define SERV_1_RUN RunTestHarnessService1
+#define SERV_1_RUN RunButtonDebounce
 // How big should this services Queue be?
 #define SERV_1_QUEUE_SIZE 3
 #endif
@@ -253,7 +253,11 @@ typedef enum
   START_GAME,
   USER_INPUT_DETECTED,
   CHANGE_TEMP,
-  RESET_ALL_GAMES
+  RESET_ALL_GAMES,
+  VOTED_YES,
+  VOTED_NO,
+  SWITCH_HIT,
+  BUTTON_DOWN
 } ES_EventType_t;
 
 /****************************************************************************/
@@ -288,7 +292,7 @@ typedef enum
 
 /****************************************************************************/
 // This is the list of event checking functions
-#define EVENT_CHECK_LIST CheckLEAFInsertion
+#define EVENT_CHECK_LIST CheckLEAFInsertion, CheckButtonPress
 
 /****************************************************************************/
 // These are the definitions for the post functions to be executed when the
@@ -300,10 +304,10 @@ typedef enum
 #define TIMER0_RESP_FUNC PostGameManager
 #define TIMER1_RESP_FUNC PostGameManager
 #define TIMER2_RESP_FUNC PostGameManager
-#define TIMER3_RESP_FUNC TIMER_UNUSED
-#define TIMER4_RESP_FUNC TIMER_UNUSED
-#define TIMER5_RESP_FUNC TIMER_UNUSED
-#define TIMER6_RESP_FUNC TIMER_UNUSED
+#define TIMER3_RESP_FUNC PostVotingGame
+#define TIMER4_RESP_FUNC PostButtonDebounce
+#define TIMER5_RESP_FUNC PostButtonDebounce
+#define TIMER6_RESP_FUNC PostButtonDebounce
 #define TIMER7_RESP_FUNC TIMER_UNUSED
 #define TIMER8_RESP_FUNC TIMER_UNUSED
 #define TIMER9_RESP_FUNC TIMER_UNUSED
@@ -312,7 +316,7 @@ typedef enum
 #define TIMER12_RESP_FUNC TIMER_UNUSED
 #define TIMER13_RESP_FUNC TIMER_UNUSED
 #define TIMER14_RESP_FUNC TIMER_UNUSED
-#define TIMER15_RESP_FUNC PostTestHarnessService0
+#define TIMER15_RESP_FUNC TIMER_UNUSED
 
 /****************************************************************************/
 // Give the timer numbers symbolc names to make it easier to move them
@@ -324,6 +328,9 @@ typedef enum
 #define 10S_TIMER 0
 #define 30S_TIMER 1
 #define 60S_TIMER 2
+#define VOTE_TIMER 3
+#define BUTTON_TIMER 4
+
 
 /**************************************************************************/
 // uncomment this ine to get some basic framework operation debugging on

@@ -4,6 +4,7 @@
 * 
 *
 ****************************************************************************************/
+// PORT D
 #define LEAF_DETECTOR_PORT0 BIT0HI
 #define LEAF_DETECTOR_PORT1 BIT1HI
 #define TEMP_LED_NUM 8
@@ -23,10 +24,10 @@ static GameManagerState CurrentState = InitPState;
 
 bool InitGameManager(uint8_t Priority) {
     // initialize ports (already set to input by default)
-    HWREG(GPIO_PORTB_BASE + GPIO_O_DEN) |= (LEAF_DETECTOR_PORT0|LEAF_DETECTOR_PORT1);
-    LEAF0LastState = HWREG(GPIO_PORTB_BASE + GPIO_O_DATA + ALL_BITS) & 
+    HWREG(GPIO_PORTD_BASE + GPIO_O_DEN) |= (LEAF_DETECTOR_PORT0|LEAF_DETECTOR_PORT1);
+    LEAF0LastState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + ALL_BITS) & 
         LEAF_DETECTOR_PORT0;
-    LEAF1LastState = HWREG(GPIO_PORTB_BASE + GPIO_O_DATA + ALL_BITS) & 
+    LEAF1LastState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + ALL_BITS) & 
         LEAF_DETECTOR_PORT1;
 
     ES_Event_t InitEvent;
@@ -69,7 +70,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 // play welcoming audio
                 ES_Event_t Event2Post;
                 Event2Post.EventType = PLAY_WELCOMING_AUDIO;
-                PostAudioService(Event2Post);
+                // PostAudioService(Event2Post);
                 // turn on thermometer LEDs
                 SR_WriteTemperature(Temperature);
                 puts("LEAF inserted correctly. Going into welcome mode.\r\n");
@@ -99,7 +100,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
                 ES_Event_t Event2Post;
                 Event2Post.EventType = STOP_WELCOMING_AUDIO;
-                PostAudioService(Event2Post);
+                // PostAudioService(Event2Post);
                 CurrentState = Standby;
             }
             break;
@@ -115,12 +116,12 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                         ES_Timer_InitTimer(10S_TIMER, 10000);
                         Event2Post.EventParam = 2;
                         PostMeatGame(Event2Post)
-                        puts("Starting second game.\r\n");
+                        puts("10s timer expired: starting second game.\r\n");
                     }
                     else if (NumOfActiveGames == 3) {
                         Event2Post.EventParam = 3;
                         PostVotingGame(Event2Post);
-                        puts("Starting third game.\r\n");
+                        puts("10s timer expired: starting third game.\r\n");
                     }
                 }
             }
@@ -140,6 +141,8 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
         default:
             puts("Error: GameManager entered unknown state.\r\n");
     }
+
+    return ReturnEvent;
 }
 
 // void CheckLEAFSwitch() {
@@ -159,9 +162,9 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
 
 void CheckLEAFInsertion() {
-    uint8_t LEAF0CurrState = HWREG(GPIO_PORTB_BASE + GPIO_O_DATA + 
+    uint8_t LEAF0CurrState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + 
         ALL_BITS) & LEAF_DETECTOR_PORT0;
-    uint8_t LEAF1CurrState = HWREG(GPIO_PORTB_BASE + GPIO_O_DATA + 
+    uint8_t LEAF1CurrState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + 
         ALL_BITS) & LEAF_DETECTOR_PORT1;
     if ((LEAF0CurrState != LEAF0LastState) || (LEAF1CurrState != LEAF1LastState)) {
         ES_Event_t Event2Post;

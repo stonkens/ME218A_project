@@ -7,7 +7,6 @@
 #ifndef GAME_MANAGER_H
 #define GAME_MANAGER_H
 
-
 #include "ES_Configure.h"
 #include "ES_Types.h" 
 
