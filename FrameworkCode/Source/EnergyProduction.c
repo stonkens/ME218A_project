@@ -50,7 +50,7 @@
 
 #define ONE_SEC 1000
 #define FIVE_SEC (ONE_SEC*5)
-#define V_INCREMENT_FIVE_SEC 342 //To be changed
+#define V_INCREMENT_FIVE_SEC 0 //To be changed
 
 // flexibility defines
 #define GPIO_PORT_EP GPIO_PORTA_BASE //configure A on electrical design
@@ -61,8 +61,8 @@
 #define TOWER_LO BIT2LO
 
 //constants
-#define V_MEDIUMALIGNED 500
-#define V_WELLALIGNED 100
+#define V_MEDIUMALIGNED 2000
+#define V_WELLALIGNED 1000
 
 
 #define COAL_AUDIO 1
@@ -79,7 +79,7 @@ static uint8_t MyPriority;
 static EnergyGameState CurrentEnergyState;
 static uint16_t LastSolarPanelVoltage;
 static bool LastSmokeTowerState;
-static uint32_t V_sun = 4095;
+static uint32_t V_sun = 2000;
 static uint32_t V_threshold = 200;
 
 
@@ -263,6 +263,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
 
     case SolarPowered:
     {
+      puts("The energy grid is solar powered \r\n");
       if(ThisEvent.EventType == ES_TOWER_UNPLUGGED)
       {
         puts("Tower unplugged, move to CoalPowered state \r\n");
@@ -484,7 +485,7 @@ static void ChangeSunVoltage(void)
 ****************************************************************************/
 static uint8_t EvaluateSolarAlignment(void)
 {
-  puts("Varying V_sun \r\n");
+  //puts("Varying V_sun \r\n");
 	uint8_t Alignment_param;
 	uint32_t V_solar = ReadSolarPanelPosition();
 	if(abs(V_sun - V_solar)<V_WELLALIGNED)
