@@ -44,7 +44,7 @@
 /* include header files for the other modules that are referenced
 */
 #include "ShiftRegisterWrite.h"
-#include "GameManager.h"
+//#include "GameManager.h"
 
 // flexibility defines
 #define GPIO_PORT GPIO_PORTB_BASE //configure B on electrical design
@@ -53,6 +53,8 @@
 #define MEAT GPIO_PIN_3
 #define MEAT_HI BIT3HI
 #define MEAT_LO BIT3LO
+
+static bool ReadMeatSwitchPress(void);
 
 // Private variables
 static uint8_t MyPriority;
@@ -82,13 +84,13 @@ static uint8_t DebounceTime=250;
 ****************************************************************************/
 bool InitMeatSwitchDebounce(uint8_t Priority)
 {
-	ES_Event_t ThisEvent;
+  ES_Event_t ThisEvent;
 
 	MyPriority = Priority;
 
-    //Set MicroSwitch as digital input
-  	HWREG(GPIO_PORT + GPIO_O_DEN) |= (MEAT_HI);
-  	HWREG(GPIO_PORT + GPIO_O_DIR) &= (MEAT_LO);
+   //Set MicroSwitch as digital input
+  HWREG(GPIO_PORT + GPIO_O_DEN) |= (MEAT_HI);
+  HWREG(GPIO_PORT + GPIO_O_DIR) &= (MEAT_LO);
 
 	//Initialize LastSwitchState
 	LastSwitchState = ReadMeatSwitchPress();
@@ -96,7 +98,7 @@ bool InitMeatSwitchDebounce(uint8_t Priority)
 	CurrentState = Debouncing;
 	//Start debounce timer (timer posts to MeatSwitchDebounceSM when timeout)
 	ES_Timer_InitTimer(DEBOUNCE_TIMER, DebounceTime); 
-  	ThisEvent.EventType = ES_INIT;
+  ThisEvent.EventType = ES_INIT;
 	return true;
 }
 
@@ -162,13 +164,13 @@ ES_Event_t RunMeatSwitchDebounceSM(ES_Event_t ThisEvent)
 			{
 				ES_Timer_InitTimer(DEBOUNCE_TIMER, DebounceTime); 
 				CurrentState = Debouncing;
-        		//Post this event to Game Manager SM
+        //Post this event to Game Manager SM
 			}
-	        else if(ThisEvent.EventType == DB_MEAT_SWITCH_DOWN)
-	      	{
+	    else if(ThisEvent.EventType == DB_MEAT_SWITCH_DOWN)
+	    {
 				ES_Timer_InitTimer(DEBOUNCE_TIMER, DebounceTime); 
-	        	CurrentState = Debouncing;
-	        	//Post this event to Game Manager SM
+        CurrentState = Debouncing;
+	      //Post this event to Game Manager SM
 			}        
 			break;
 		}
@@ -213,8 +215,8 @@ bool CheckMeatSwitchEvents(void)
 			PostMeatSwitchDebounce(ThisEvent);
 
 			AnyEvent.EventType = ES_USERMVT_DETECTED;
-  			//Post ES_USERMVT_DETECTED to game manager
-  			PostGameManager(AnyEvent);
+  		//Post ES_USERMVT_DETECTED to game manager
+  		//PostGameManager(AnyEvent);
 		}
 		else
 		{		
@@ -226,7 +228,7 @@ bool CheckMeatSwitchEvents(void)
 	return ReturnVal;
 }
 
-bool ReadMeatSwitchPress(void)
+static bool ReadMeatSwitchPress(void)
 {
 	bool SwitchState;
 	SwitchState = HWREG(GPIO_PORT + GPIO_O_DATA + ALL_BITS) & MEAT_HI;

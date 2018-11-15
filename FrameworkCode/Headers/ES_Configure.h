@@ -270,7 +270,8 @@ typedef enum
   ES_AUDIO_END,
   ES_RESET_ALL_GAMES, //name to be modified based on Connie's params
   ES_SOLARPOS_CHANGE,
-  ES_MOVE_SUN
+  ES_MOVE_SUN,
+  ES_USERMVT_DETECTED
 
 }ES_EventType_t;
 
@@ -278,7 +279,7 @@ typedef enum
 // These are the definitions for the Distribution lists. Each definition
 // should be a comma separated list of post functions to indicate which
 // services are on that distribution list.
-#define NUM_DIST_LISTS 1
+#define NUM_DIST_LISTS 0
 #if NUM_DIST_LISTS > 0
 #define DIST_LIST0 PostTestHarnessService0, PostTestHarnessService0
 #endif
@@ -306,8 +307,7 @@ typedef enum
 
 /****************************************************************************/
 // This is the list of event checking functions
-#define EVENT_CHECK_LIST CheckMeatSwitchEvents, CheckSolarPanelPosition,
-CheckSmokeTowerEvents
+#define EVENT_CHECK_LIST CheckMeatSwitchEvents, CheckSolarPanelPosition, CheckSmokeTowerEvents
 
 /****************************************************************************/
 // These are the definitions for the post functions to be executed when the
@@ -331,7 +331,7 @@ CheckSmokeTowerEvents
 #define TIMER12_RESP_FUNC TIMER_UNUSED
 #define TIMER13_RESP_FUNC TIMER_UNUSED
 #define TIMER14_RESP_FUNC TIMER_UNUSED
-#define TIMER15_RESP_FUNC PostTestHarnessService0
+#define TIMER15_RESP_FUNC TIMER_UNUSED
 
 /****************************************************************************/
 // Give the timer numbers symbolc names to make it easier to move them
@@ -342,6 +342,7 @@ CheckSmokeTowerEvents
 
 #define DEBOUNCE_TIMER 0
 #define SUN_POSITION_TIMER 1
+#define TEST_HARNESS_TIMER 2
 
 /**************************************************************************/
 // uncomment this ine to get some basic framework operation debugging on

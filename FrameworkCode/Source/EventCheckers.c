@@ -104,25 +104,5 @@ bool Check4Lock(void)
  Author
    J. Edward Carryer, 08/06/13, 13:48
 ****************************************************************************/
-bool Check4Keystroke(void)
-{
-  if (IsNewKeyReady())   // new key waiting?
-  {
-    ES_Event_t ThisEvent;
-    ThisEvent.EventType   = ES_NEW_KEY;
-    ThisEvent.EventParam  = GetNewKey();
-    // test distribution list functionality by sending the 'L' key out via
-    // a distribution list.
-    if (ThisEvent.EventParam == 'L')
-    {
-      ES_PostList00(ThisEvent);
-    }
-    else     // otherwise post to Service 0 for processing
-    {
-      PostTestHarnessService0(ThisEvent);
-    }
-    return true;
-  }
-  return false;
-}
+
 

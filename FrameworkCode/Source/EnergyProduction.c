@@ -40,18 +40,20 @@
 #include "ES_DeferRecall.h"
 #include "ES_ShortTimer.h"
 
+
 /* include header files for the other modules that are referenced
 */
 #include "ShiftRegisterWrite.h"
 #include "SunMovement.h"
-#include "GameManager.h"
+#include "ADMulti.h"
+//#include "GameManager.h"
 
 #define ONE_SEC 1000
 #define FIVE_SEC (ONE_SEC*5)
 #define V_INCREMENT_FIVE_SEC 342 //To be changed
 
 // flexibility defines
-#define GPIO_PORT GPIO_PORTA_BASE //configure A on electrical design
+#define GPIO_PORT_EP GPIO_PORTA_BASE //configure A on electrical design
 
 //readability defines
 #define TOWER GPIO_PIN_2
@@ -63,9 +65,14 @@
 #define V_WELLALIGNED 100
 
 
+#define COAL_AUDIO 1
+
+
 // Private functions
 static uint32_t ReadSolarPanelPosition(void);
 static bool ReadSmokeTowerIR(void);
+static void ChangeSunVoltage(void);
+static uint8_t EvaluateSolarAlignment(void);
 
 // module level defines
 static uint8_t MyPriority;
@@ -73,6 +80,7 @@ static EnergyGameState CurrentEnergyState;
 static uint16_t LastSolarPanelVoltage;
 static bool LastSmokeTowerState;
 static uint32_t V_sun = 4095;
+static uint32_t V_threshold = 100;
 
 
 
@@ -97,25 +105,25 @@ static uint32_t V_sun = 4095;
 bool InitEnergyProduction(uint8_t Priority)
 {
 
-  	ES_Event_t ThisEvent;
-  
-  	MyPriority = Priority;
-  	//Define solar panel position TIVA input as an analog input 
-  	ADC_MultiInit(1); 
-  	//Define SmokeTowerIR TIVA input as a digital input
- 	HWREG(GPIO_PORT + GPIO_O_DEN) |= (TOWER_HI);
-  	HWREG(GPIO_PORT + GPIO_O_DIR) &= (TOWER_LO);
+  ES_Event_t ThisEvent;
 
-  	//Sample port line and use it to initialize the LastSolarPanelVoltage variable
-  	LastSolarPanelVoltage = ReadSolarPanelPosition();
-  	LastSmokeTowerState = ReadSmokeTowerIR();
-  	
-  	CurrentEnergyState = InitEnergyGame;
+  MyPriority = Priority;
+  //Define solar panel position TIVA input as an analog input 
+  ADC_MultiInit(1); 
+  //Define SmokeTowerIR TIVA input as a digital input
+  HWREG(GPIO_PORT_EP + GPIO_O_DEN) |= (TOWER_HI);
+  HWREG(GPIO_PORT_EP + GPIO_O_DIR) &= (TOWER_LO);
+
+  //Sample port line and use it to initialize the LastSolarPanelVoltage variable
+  LastSolarPanelVoltage = ReadSolarPanelPosition();
+  LastSmokeTowerState = ReadSmokeTowerIR();
   
-  	//Post Event ES_Init to EnergyProduction queue (this service)
-  	ThisEvent.EventType = ES_INIT;
-  	PostEnergyProduction(ThisEvent);
-  	return true;
+  CurrentEnergyState = InitEnergyGame;
+
+  //Post Event ES_Init to EnergyProduction queue (this service)
+  ThisEvent.EventType = ES_INIT;
+  PostEnergyProduction(ThisEvent);
+  return true;
 }
 
 /****************************************************************************
@@ -232,7 +240,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       {
         //1. Play coalplant audio
       }
-      else if((ThisEvent.EventType == ES_RESET_ALL_GAMES))
+      else if(ThisEvent.EventType == ES_RESET_ALL_GAMES)
       {
       	//1. Stop playing coalplant audio directly
       	//2. Function to reset sun to original position
@@ -273,13 +281,13 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         SR_WriteEnergy(2*energy_level);
         
       }
-      else if((ThisEvent.EventType == ES_SOLARPOS_CHANGE))
+      else if(ThisEvent.EventType == ES_SOLARPOS_CHANGE)
       {
         //Call EvaluateAlignment to check alignment solar panel
         energy_level = EvaluateSolarAlignment();
         SR_WriteEnergy(2*energy_level);
       }
-      else if((ThisEvent.EventType == ES_RESET_ALL_GAMES))
+      else if(ThisEvent.EventType == ES_RESET_ALL_GAMES)
       {
         //Move sun to initial position by calling that service
         MoveSunEvent.EventType = ES_MOVE_SUN;
@@ -329,7 +337,7 @@ bool CheckSolarPanelPosition(void)
   	PostEnergyProduction(ThisEvent);
   	AnyEvent.EventType = ES_USERMVT_DETECTED;
   	//Post ES_USERMVT_DETECTED to game manager
-  	PostGameManager(AnyEvent);
+  	//PostGameManager(AnyEvent);
     ReturnVal = true;
   }
   LastSolarPanelVoltage = CurrentSolarPanelVoltage;
@@ -372,7 +380,7 @@ bool CheckSmokeTowerEvents(void)
       PostEnergyProduction(ThisEvent);
       AnyEvent.EventType = ES_USERMVT_DETECTED;
       //Post ES_USERMVT_DETECTED to game manager
-      PostGameManager(AnyEvent);
+      //PostGameManager(AnyEvent);
     }
     else
     {   
@@ -380,7 +388,7 @@ bool CheckSmokeTowerEvents(void)
       PostEnergyProduction(ThisEvent);
       AnyEvent.EventType = ES_USERMVT_DETECTED;
       //Post ES_USERMVT_DETECTED to game manager
-      PostGameManager(AnyEvent);
+      //PostGameManager(AnyEvent);
     }
   } 
   LastSmokeTowerState = CurrentSmokeTowerState;
@@ -415,7 +423,7 @@ static uint32_t ReadSolarPanelPosition(void)
   uint32_t SolarPanelPosition[1];
   //Read analog input pin 
   ADC_MultiRead(SolarPanelPosition); 
-  return SolarPanelPosition[1];
+  return SolarPanelPosition[0];
 }
 
 /****************************************************************************
@@ -461,7 +469,7 @@ static void ChangeSunVoltage(void)
 ****************************************************************************/
 static uint8_t EvaluateSolarAlignment(void)
 {
-	uint8_t Alignment_param
+	uint8_t Alignment_param;
 	uint32_t V_solar = ReadSolarPanelPosition();
 	if(abs(V_sun - V_solar)<V_WELLALIGNED)
 	{
@@ -499,7 +507,7 @@ static bool ReadSmokeTowerIR(void)
 {
   bool SmokeTowerIRState;
   //Read digital input pin (as in Morselements)
-  SmokeTowerIRState = HWREG(GPIO_PORT + (GPIO_O_DATA + ALL_BITS)) & TOWER_HI;
+  SmokeTowerIRState = HWREG(GPIO_PORT_EP + (GPIO_O_DATA + ALL_BITS)) & TOWER_HI;
   return SmokeTowerIRState;
 }
 

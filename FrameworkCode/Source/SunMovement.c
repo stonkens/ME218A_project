@@ -47,7 +47,7 @@
 
 // module level defines
 static uint8_t sun_position = 0;
-
+static uint8_t MyPriority;
 
 /****************************************************************************
  Function

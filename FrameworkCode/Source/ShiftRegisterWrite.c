@@ -28,6 +28,10 @@
 #include "inc/hw_sysctl.h"
 #include "termio.h"
 
+/* include header files for this service
+*/
+#include "ShiftRegisterWrite.h"
+
 // the headers to access the TivaWare Library
 #include "driverlib/sysctl.h"
 #include "driverlib/pin_map.h"
@@ -158,7 +162,7 @@ void SR_WriteSun(uint8_t NewValue)
   //UpdatedRegisterImage = ((LocalRegisterImage & SUN_MASK) | (BitState<<x)
   UpdatedRegisterImage = ((LocalRegisterImage & SUN_MASK)) | (SunBinary<<SUN_POS);
 
-  SR_Write(UpdatedRegisterImage);
+  //SR_Write(UpdatedRegisterImage);
   return;
 }
 /****************************************************************************
@@ -315,7 +319,7 @@ void SR_Write(uint32_t NewValue){
 ****************************************************************************/
 static uint32_t SetXBits(uint8_t NumberOfBits)
 {
-  uint32_t BinaryRep = 0
-  BinaryRep = ~(~0 << NumberOfBits)
+  uint32_t BinaryRep = 0;
+  BinaryRep = ~(~0 << NumberOfBits);
   return BinaryRep;
 }

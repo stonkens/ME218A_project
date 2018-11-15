@@ -428,9 +428,29 @@
               <FilePath>.\Source\TestHarnessService0.c</FilePath>
             </File>
             <File>
-              <FileName>TemplateFSM.c</FileName>
+              <FileName>EnergyProduction.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Source\TemplateFSM.c</FilePath>
+              <FilePath>.\Source\EnergyProduction.c</FilePath>
+            </File>
+            <File>
+              <FileName>MeatSwitchDebounce.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Source\MeatSwitchDebounce.c</FilePath>
+            </File>
+            <File>
+              <FileName>ShiftRegisterWrite.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Source\ShiftRegisterWrite.c</FilePath>
+            </File>
+            <File>
+              <FileName>SunMovement.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Source\SunMovement.c</FilePath>
+            </File>
+            <File>
+              <FileName>ADMulti.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Source\ADMulti.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -541,6 +561,36 @@
               <FileName>ES_ShortTimer.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Headers\ES_ShortTimer.h</FilePath>
+            </File>
+            <File>
+              <FileName>EnergyProduction.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Headers\EnergyProduction.h</FilePath>
+            </File>
+            <File>
+              <FileName>ES_EventCheckWrapper.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Headers\ES_EventCheckWrapper.h</FilePath>
+            </File>
+            <File>
+              <FileName>MeatSwitchDebounce.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Headers\MeatSwitchDebounce.h</FilePath>
+            </File>
+            <File>
+              <FileName>ShiftRegisterWrite.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Headers\ShiftRegisterWrite.h</FilePath>
+            </File>
+            <File>
+              <FileName>SunMovement.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Headers\SunMovement.h</FilePath>
+            </File>
+            <File>
+              <FileName>ADMulti.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Headers\ADMulti.h</FilePath>
             </File>
           </Files>
         </Group>
