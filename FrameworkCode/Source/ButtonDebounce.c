@@ -22,7 +22,8 @@
 #include "ES_Framework.h"
 #include "ES_ShortTimer.h"
 
-#define DEBOUNCE_TIME 100
+#define DEBOUNCE_TIME 200
+// port D
 #define YES_BUTTON_PORT BIT1HI
 #define NO_BUTTON_PORT BIT0HI
 #define SWITCH_PORT BIT2HI
@@ -30,7 +31,7 @@
 static uint8_t MyPriority;
 // use lines on Port D
 static const uint8_t NumOfButtons = 3;
-static uint8_t ButtonPorts[] = {YES_BUTTON_PORT, NO_BUTTON_PORT, SWITCH_HIT};
+static uint8_t ButtonPorts[] = {YES_BUTTON_PORT, NO_BUTTON_PORT, SWITCH_PORT};
 static uint8_t ButtonLastStates[3];
 static ES_EventType_t Events2Post[] = {VOTED_YES, VOTED_NO, SWITCH_HIT};
 
@@ -42,7 +43,9 @@ bool InitButtonDebounce(uint8_t Priority) {
         // read initial state of buttons
         ButtonLastStates[i] = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + ALL_BITS) 
             & ButtonPorts[i];
+        printf("initial state: %d\r\n", ButtonLastStates[i]);
     }
+    puts("ButtonDebounce service initialized.\r\n");
     return true;
 }
 
@@ -56,14 +59,14 @@ ES_Event_t RunButtonDebounce(ES_Event_t ThisEvent) {
 
     if (ThisEvent.EventType == BUTTON_DOWN) {
         uint8_t ButtonNum = ThisEvent.EventParam;
-        printf("Button %d was pressed.\r\n", ButtonNum);
+        // printf("Button %d was pressed.\r\n", ButtonNum);
         ES_Timer_InitTimer((BUTTON_TIMER + ButtonNum), DEBOUNCE_TIME);
     }
 
     else if (ThisEvent.EventType == BUTTON_UP) {
         uint8_t ButtonNum = ThisEvent.EventParam;
         ES_Timer_StopTimer(BUTTON_TIMER + ButtonNum);
-        puts("Debounced.\r\n");
+        // puts("Debounced.\r\n");
     }
 
     else if (ThisEvent.EventType == ES_TIMEOUT) {
@@ -74,13 +77,14 @@ ES_Event_t RunButtonDebounce(ES_Event_t ThisEvent) {
             printf("Button %d pressed; posting to voting game.\r\n", ButtonNum);
             ES_Event_t Event2Post;
             Event2Post.EventType = Events2Post[ButtonNum];
-            // PostVotingGame(Event2Post);
+            PostVotingGame(Event2Post);
         }
     }
     return ReturnEvent;
 }
 
-void CheckButtonPress() {
+bool CheckButtonPress() {
+    bool ReturnValue = false;
     for (int i=0; i < NumOfButtons; i++) {
         uint8_t ButtonCurrState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + ALL_BITS) 
             & ButtonPorts[i];
@@ -93,8 +97,10 @@ void CheckButtonPress() {
             Event2Post.EventParam = i;
             ES_PostToService(MyPriority, Event2Post);
             ButtonLastStates[i] = ButtonCurrState;
+            ReturnValue = true;
         }
     }
+    return ReturnValue;
 }
 
 

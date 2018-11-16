@@ -18,6 +18,8 @@
 // This is the header for the event checkers for the template project
 #include "GameManager.h"
 #include "ButtonDebounce.h"
+#include "EventCheckers.h"
+#include "VotingGame.h"
 
 // Here you would #include the header files for any other modules that
 // contained event checking functions

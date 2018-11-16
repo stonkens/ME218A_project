@@ -109,20 +109,32 @@ bool Check4Keystroke(void)
   if (IsNewKeyReady())   // new key waiting?
   {
     ES_Event_t ThisEvent;
-    ThisEvent.EventType   = ES_NEW_KEY;
-    ThisEvent.EventParam  = GetNewKey();
-    // test distribution list functionality by sending the 'L' key out via
-    // a distribution list.
-    if (ThisEvent.EventParam == 'L')
+    uint8_t Key = GetNewKey();
+    if (Key == 'i')
     {
-      ES_PostList00(ThisEvent);
+      ThisEvent.EventType = LEAF_IN_INCORRECT;
+      PostGameManager(ThisEvent);
     }
-    else     // otherwise post to Service 0 for processing
+    else if (Key == 'c')
     {
-      PostTestHarnessService0(ThisEvent);
+      ThisEvent.EventType = LEAF_IN_CORRECT;
+      PostGameManager(ThisEvent);
+    }
+    else if (Key == 'r')
+    {
+      ThisEvent.EventType = LEAF_REMOVED;
+      PostGameManager(ThisEvent);
+    }
+    else if (Key == 'a')
+    {
+      ThisEvent.EventType = WELCOMING_AUDIO_DONE;
+      PostGameManager(ThisEvent);
+    }
+    else {
+      ThisEvent.EventType = USER_INPUT_DETECTED;
+      PostGameManager(ThisEvent);
     }
     return true;
   }
   return false;
 }
-

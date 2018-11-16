@@ -17,6 +17,6 @@ bool InitButtonDebounce(uint8_t Priority);
 bool PostButtonDebounce(ES_Event_t ThisEvent);
 ES_Event_t RunButtonDebounce(ES_Event_t ThisEvent);
 
-void CheckButtonPress(void);
+bool CheckButtonPress(void);
 
 #endif

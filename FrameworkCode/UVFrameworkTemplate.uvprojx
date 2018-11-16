@@ -428,7 +428,7 @@
                   <RVCTZI>0</RVCTZI>
                   <RVCTOtherData>0</RVCTOtherData>
                   <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>0</IncludeInBuild>
+                  <IncludeInBuild>1</IncludeInBuild>
                   <AlwaysBuild>2</AlwaysBuild>
                   <GenerateAssemblyFile>2</GenerateAssemblyFile>
                   <AssembleAssemblyFile>2</AssembleAssemblyFile>
@@ -474,6 +474,11 @@
               <FileName>ButtonDebounce.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Source\ButtonDebounce.c</FilePath>
+            </File>
+            <File>
+              <FileName>VotingGame.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Source\VotingGame.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -589,6 +594,16 @@
               <FileName>GameManager.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Headers\GameManager.h</FilePath>
+            </File>
+            <File>
+              <FileName>ES_EventCheckWrapper.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Headers\ES_EventCheckWrapper.h</FilePath>
+            </File>
+            <File>
+              <FileName>VotingGame.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Headers\VotingGame.h</FilePath>
             </File>
           </Files>
         </Group>

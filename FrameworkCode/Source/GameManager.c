@@ -5,12 +5,13 @@
 *
 ****************************************************************************************/
 // PORT D
-#define LEAF_DETECTOR_PORT0 BIT0HI
-#define LEAF_DETECTOR_PORT1 BIT1HI
+#define LEAF_DETECTOR_PORT0 BIT6HI
+#define LEAF_DETECTOR_PORT1 BIT7HI
 #define TEMP_LED_NUM 8
 
 #include "GameManager.h"
 #include "ES_Framework.h"
+
 
 // the headers to access the GPIO subsystem
 #include "inc/hw_memmap.h"
@@ -21,13 +22,14 @@
 // #include "ShiftRegisterWrite.h"
 // #include "AudioService.h"
 // include the header files of all games (need access to post functions)
+#include "VotingGame.h"
 
 
 /****************************** Private Functions & Variables **************************/
 static uint8_t LEAF0LastState;
 static uint8_t LEAF1LastState;
 static uint8_t MyPriority;
-static GameManagerState CurrentState = InitPState;
+static GameManagerState CurrentState = InitGState;
 
 bool InitGameManager(uint8_t Priority) {
     // initialize ports (already set to input by default)
@@ -58,9 +60,11 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
     ReturnEvent.EventType = ES_NO_EVENT;
 
     switch (CurrentState) {
-        case InitPState:
-            if (ThisEvent.EventType == ES_INIT)
+        case InitGState:
+            if (ThisEvent.EventType == ES_INIT) {
+                puts("GameManager in standby mode.\r\n");
                 CurrentState = Standby;
+            }
             else 
                 puts("Error: did not receive ES_INIT event.\r\n");
             break;
@@ -96,7 +100,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
                 // start timers
                 ES_Timer_InitTimer(NEXT_GAME_TIMER, 10000);
-                ES_Timer_InitTimer(USR_INPUT_TIMER, 30000);
+                ES_Timer_InitTimer(USER_INPUT_TIMER, 30000);
                 ES_Timer_InitTimer(GAME_END_TIMER, 60000);
                 CurrentState = GameActive;
             }
@@ -109,6 +113,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 // Event2Post.EventType = STOP_WELCOMING_AUDIO;
                 // PostAudioService(Event2Post);
                 CurrentState = Standby;
+                puts("LEAF removed; going back to standby.\r\n");
             }
             break;
 
@@ -127,24 +132,32 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                     }
                     else if (NumOfActiveGames == 3) {
                         Event2Post.EventParam = 3;
-                        // PostVotingGame(Event2Post);
+                        PostVotingGame(Event2Post);
                         puts("10s timer expired: starting third game.\r\n");
                     }
                 }
             }
 
+            /* else if (((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
+                USR_INPUT_TIMER)) || (ThisEvent.EventType == LEAF_REMOVED)) { */
             else if (((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
-                USR_INPUT_TIMER)) || (ThisEvent.EventType == LEAF_REMOVED)) {
+                USER_INPUT_TIMER))) {
                 puts("No user input detected for 30s, or LEAF removed. Resetting all games.\r\n");
                 // SR_WriteTemperature(0);
                 ES_Event_t Event2Post;
                 Event2Post.EventType = RESET_ALL_GAMES;
                 // post event to distribution list
                 // ES_PostList00(Event2Post);
+                CurrentState = Standby;
             }
-
+                
+            else if (ThisEvent.EventType == USER_INPUT_DETECTED) {
+                ES_Timer_InitTimer(USER_INPUT_TIMER, 30000);
+                puts("Resetting 30s timer.\r\n");
+            }
             // else if 60s timer expires
             // else if change_temp event is posted
+            break;
 
         default:
             puts("Error: GameManager entered unknown state.\r\n");
@@ -169,9 +182,21 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 // }
 
 
-void CheckLEAFInsertion() {
+bool CheckLEAFInsertion() {
     uint8_t LEAF0CurrState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + 
         ALL_BITS) & LEAF_DETECTOR_PORT0;
+    if (LEAF0CurrState != LEAF0LastState) {
+      ES_Event_t Event2Post;  
+      if (LEAF0CurrState)
+          Event2Post.EventType = LEAF_REMOVED;
+      else
+          Event2Post.EventType = LEAF_IN_CORRECT;
+      ES_PostToService(MyPriority, Event2Post);
+      LEAF0LastState = LEAF0CurrState;
+      return true;
+    }
+  
+/*  
     uint8_t LEAF1CurrState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + 
         ALL_BITS) & LEAF_DETECTOR_PORT1;
     if ((LEAF0CurrState != LEAF0LastState) || (LEAF1CurrState != LEAF1LastState)) {
@@ -190,7 +215,7 @@ void CheckLEAFInsertion() {
             if (LEAF0CurrState) {
                 // assuming LEAF_DETECTOR_PORT0 sets the lower threshold
                 puts("Error: something went wrong with LEAF detection.\r\n");
-                return;
+                return false;
             }
             else {
                 // background is gray
@@ -200,5 +225,8 @@ void CheckLEAFInsertion() {
         ES_PostToService(MyPriority, Event2Post);
         LEAF0LastState = LEAF0CurrState;
         LEAF1LastState = LEAF1LastState;
-    }
+        return true;
+      }
+*/
+    return false;
 }

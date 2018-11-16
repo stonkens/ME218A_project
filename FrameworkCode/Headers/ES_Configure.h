@@ -18,7 +18,7 @@
 /****************************************************************************/
 // This macro determines that nuber of services that are *actually* used in
 // a particular application. It will vary in value from 1 to MAX_NUM_SERVICES
-#define NUM_SERVICES 2
+#define NUM_SERVICES 3
 
 /****************************************************************************/
 // These are the definitions for Service 0, the lowest priority service.
@@ -55,13 +55,13 @@
 // These are the definitions for Service 2
 #if NUM_SERVICES > 2
 // the header file with the public function prototypes
-#define SERV_2_HEADER "TestHarnessService2.h"
+#define SERV_2_HEADER "VotingGame.h"
 // the name of the Init function
-#define SERV_2_INIT InitTestHarnessService2
+#define SERV_2_INIT InitVotingGame
 // the name of the run function
-#define SERV_2_RUN RunTestHarnessService2
+#define SERV_2_RUN RunVotingGame
 // How big should this services Queue be?
-#define SERV_2_QUEUE_SIZE 3
+#define SERV_2_QUEUE_SIZE 5
 #endif
 
 /****************************************************************************/
@@ -293,7 +293,7 @@ typedef enum
 
 /****************************************************************************/
 // This is the list of event checking functions
-#define EVENT_CHECK_LIST CheckLEAFInsertion, CheckButtonPress
+#define EVENT_CHECK_LIST CheckLEAFInsertion, CheckButtonPress, Check4Keystroke
 
 /****************************************************************************/
 // These are the definitions for the post functions to be executed when the
@@ -305,7 +305,7 @@ typedef enum
 #define TIMER0_RESP_FUNC PostGameManager
 #define TIMER1_RESP_FUNC PostGameManager
 #define TIMER2_RESP_FUNC PostGameManager
-#define TIMER3_RESP_FUNC TIMER_UNUSED // PostVotingGame
+#define TIMER3_RESP_FUNC PostVotingGame
 #define TIMER4_RESP_FUNC PostButtonDebounce
 #define TIMER5_RESP_FUNC PostButtonDebounce
 #define TIMER6_RESP_FUNC PostButtonDebounce
@@ -327,7 +327,7 @@ typedef enum
 // These symbolic names should be changed to be relevant to your application
 
 #define NEXT_GAME_TIMER 0
-#define USR_INPUT_TIMER 1
+#define USER_INPUT_TIMER 1
 #define GAME_END_TIMER 2
 #define VOTE_TIMER 3
 #define BUTTON_TIMER 4
