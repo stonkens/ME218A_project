@@ -127,14 +127,14 @@ ES_Event_t RunSunMovement(ES_Event_t ThisEvent)
 
   if(ThisEvent.EventType == ES_MOVE_SUN)
   {
-    if(ThisEvent.EventParam == 0)
+    if(ThisEvent.EventParam == 0) //Move every 5 seconds
     {
-      //Move sun by 1/12th of a day
+      //Move sun by 1/12th of a day //Connie
       //Update value of sun position
     }
-    else if(ThisEvent.EventParam == 1)
+    else if(ThisEvent.EventParam == 1) //Reset all games
     {
-      //Return sun to its initial position
+      //Return sun to its initial position //Connie
       //Use current sun position value as the
     }
   }

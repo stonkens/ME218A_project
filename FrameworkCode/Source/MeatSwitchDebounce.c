@@ -151,7 +151,7 @@ ES_Event_t RunMeatSwitchDebounceSM(ES_Event_t ThisEvent)
 		case Debouncing:
 		{
 			//	If EventType is ES_TIMEOUT & parameter is debounce timer number
-    		if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == DEBOUNCE_TIMER))
+    	if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == DEBOUNCE_TIMER))
 			{
 				CurrentState = Ready2Sample;
 			}
@@ -215,7 +215,7 @@ bool CheckMeatSwitchEvents(void)
 			PostMeatSwitchDebounce(ThisEvent);
 
 			AnyEvent.EventType = ES_USERMVT_DETECTED;
-  		//Post ES_USERMVT_DETECTED to game manager
+  		//Post ES_USERMVT_DETECTED to game manager //Connie
   		//PostGameManager(AnyEvent);
 		}
 		else
