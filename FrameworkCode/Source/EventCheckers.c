@@ -37,7 +37,7 @@
 // include our own prototypes to insure consistency between header &
 // actual functionsdefinition
 #include "EventCheckers.h"
-
+#include "ShiftRegisterWrite.h"
 // This is the event checking function sample. It is not intended to be
 // included in the module. It is only here as a sample to guide you in writing
 // your own event checkers
@@ -104,7 +104,6 @@ bool Check4Lock(void)
  Author
    J. Edward Carryer, 08/06/13, 13:48
 ****************************************************************************/
-<<<<<<< HEAD
 bool Check4Keystroke(void)
 {
   if (IsNewKeyReady())   // new key waiting?
@@ -131,15 +130,17 @@ bool Check4Keystroke(void)
       ThisEvent.EventType = WELCOMING_AUDIO_DONE;
       PostGameManager(ThisEvent);
     }
+    else if (Key == 'z')
+    {
+      SR_WriteTemperature(5);
+    }
+    
     else {
-      ThisEvent.EventType = USER_INPUT_DETECTED;
+      ThisEvent.EventType = USERMVT_DETECTED;
       PostGameManager(ThisEvent);
     }
     return true;
   }
   return false;
 }
-=======
 
-
->>>>>>> sander

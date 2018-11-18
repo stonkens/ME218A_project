@@ -44,7 +44,7 @@
 /* include header files for the other modules that are referenced
 */
 #include "ShiftRegisterWrite.h"
-//#include "GameManager.h"
+#include "GameManager.h"
 
 // flexibility defines
 #define GPIO_PORT GPIO_PORTB_BASE //configure B on electrical design
@@ -54,12 +54,15 @@
 #define MEAT_HI BIT3HI
 #define MEAT_LO BIT3LO
 
+#define MEAT_TEMPCHANGE 4 //number of pieces of meat to change temperature
+
 static bool ReadMeatSwitchPress(void);
 
 // Private variables
 static uint8_t MyPriority;
 static bool LastSwitchState;
-static MeatSwitchDebounceState CurrentState;
+static MeatSwitchDebounceState CurrentButtonState;
+static MeatGameState GameStatus;
 
 // module level defines
 static uint8_t DebounceTime=250;
@@ -95,10 +98,11 @@ bool InitMeatSwitchDebounce(uint8_t Priority)
 	//Initialize LastSwitchState
 	LastSwitchState = ReadMeatSwitchPress();
 
-	CurrentState = Debouncing;
+	GameStatus = InitMeatGame;
 	//Start debounce timer (timer posts to MeatSwitchDebounceSM when timeout)
-	ES_Timer_InitTimer(DEBOUNCE_TIMER, DebounceTime); 
   ThisEvent.EventType = ES_INIT;
+  PostMeatSwitchDebounce(ThisEvent);
+  
 	return true;
 }
 
@@ -144,37 +148,69 @@ Parameters
 ES_Event_t RunMeatSwitchDebounceSM(ES_Event_t ThisEvent)
 {
 	ES_Event_t ReturnEvent;
+  ES_Event_t TemperatureChange;
 	ReturnEvent.EventType = ES_NO_EVENT;
-	
-	switch(CurrentState)
-	{
-		case Debouncing:
-		{
-			//	If EventType is ES_TIMEOUT & parameter is debounce timer number
-    	if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == DEBOUNCE_TIMER))
-			{
-				CurrentState = Ready2Sample;
-			}
-			break;
-		}
-		
-		case Ready2Sample:
-		{
-			if(ThisEvent.EventType == DB_MEAT_SWITCH_UP)
-			{
-				ES_Timer_InitTimer(DEBOUNCE_TIMER, DebounceTime); 
-				CurrentState = Debouncing;
-        //Post this event to Game Manager SM
-			}
-	    else if(ThisEvent.EventType == DB_MEAT_SWITCH_DOWN)
-	    {
-				ES_Timer_InitTimer(DEBOUNCE_TIMER, DebounceTime); 
-        CurrentState = Debouncing;
-	      //Post this event to Game Manager SM
-			}        
-			break;
-		}
-	}
+  static uint8_t MeatPieces = 0;
+	switch(GameStatus)
+  {
+    case InitMeatGame:
+    {
+      if(ThisEvent.EventType == ES_INIT)
+      {
+        GameStatus = MeatStandBy;
+      }
+    break;
+    }
+    
+    case(MeatStandBy):
+    {
+      if((ThisEvent.EventType == START_GAME) && (ThisEvent.EventParam == 2))
+      {
+        puts("Meat game started \r\n");
+        GameStatus = MeatActive;
+        CurrentButtonState = Ready2Sample;
+      }
+    }
+    case(MeatActive):
+    {
+      switch(CurrentButtonState)
+      {
+        case Debouncing:
+        {
+          //	If EventType is ES_TIMEOUT & parameter is debounce timer number
+          if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == DEBOUNCE_TIMER))
+          {
+            CurrentButtonState = Ready2Sample;
+          }
+          break;
+        }
+        
+        case Ready2Sample:
+        {
+          if(ThisEvent.EventType == DB_MEAT_SWITCH_UP)
+          {
+            ES_Timer_InitTimer(DEBOUNCE_TIMER, DebounceTime); 
+            CurrentButtonState = Debouncing;
+          }
+          else if(ThisEvent.EventType == DB_MEAT_SWITCH_DOWN)
+          {
+            ES_Timer_InitTimer(DEBOUNCE_TIMER, DebounceTime); 
+            CurrentButtonState = Debouncing;
+            MeatPieces ++;
+            if (MeatPieces % MEAT_TEMPCHANGE == 0)
+            {
+              //Turn 1 temperature LED off
+              TemperatureChange.EventType = CHANGE_TEMP;
+              TemperatureChange.EventParam = 1;
+              puts("Temp down by 1, removed enough meat \r\n");
+              PostGameManager(TemperatureChange);
+            }
+          }        
+          break;
+        }
+      }
+    }
+  }
 	return ReturnEvent;
 }
 
@@ -214,9 +250,8 @@ bool CheckMeatSwitchEvents(void)
 			ThisEvent.EventType = DB_MEAT_SWITCH_DOWN;
 			PostMeatSwitchDebounce(ThisEvent);
 
-			AnyEvent.EventType = ES_USERMVT_DETECTED;
-  		//Post ES_USERMVT_DETECTED to game manager //Connie
-  		//PostGameManager(AnyEvent);
+			AnyEvent.EventType = USERMVT_DETECTED;
+  		PostGameManager(AnyEvent);
 		}
 		else
 		{		

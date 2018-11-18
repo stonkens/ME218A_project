@@ -14,6 +14,7 @@ based on the Gen 2 Events and Service Framework
 
 typedef enum {Debouncing, Ready2Sample} MeatSwitchDebounceState;
 
+typedef enum {InitMeatGame, MeatStandBy, MeatActive} MeatGameState;
 //Public Function Prototypes
 bool InitMeatSwitchDebounce(uint8_t Priority);
 bool PostMeatSwitchDebounce(ES_Event_t ThisEvent);

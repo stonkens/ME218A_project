@@ -50,4 +50,4 @@ void SR_WriteSun(uint8_t NewValue);
 void SR_WriteEnergy(uint8_t NewValue);
 void SR_WriteTemperature(uint8_t NewValue);
 
-#endif 
+#endif /* ShiftRegisterWrite_H */

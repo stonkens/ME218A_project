@@ -46,7 +46,7 @@
 #include "ShiftRegisterWrite.h"
 #include "SunMovement.h"
 #include "ADMulti.h"
-//#include "GameManager.h"
+#include "GameManager.h"
 
 #define ONE_SEC 1000
 #define FIVE_SEC (ONE_SEC*5)
@@ -109,7 +109,7 @@ bool InitEnergyProduction(uint8_t Priority)
 
   MyPriority = Priority;
   //Define solar panel position TIVA input as an analog input 
-  ADC_MultiInit(1); //to be placed in main.c
+
   //Define SmokeTowerIR TIVA input as a digital input
   HWREG(GPIO_PORT_EP + GPIO_O_DEN) |= (TOWER_HI);
   HWREG(GPIO_PORT_EP + GPIO_O_DIR) &= (TOWER_LO);
@@ -123,9 +123,6 @@ bool InitEnergyProduction(uint8_t Priority)
   //Post Event ES_Init to EnergyProduction queue (this service)
   ThisEvent.EventType = ES_INIT;
   PostEnergyProduction(ThisEvent);
-  //2 lines below are only for testing. Connie
-  //ThisEvent.EventType = ES_ENERGY_GAME_START;
-  //PostEnergyProduction(ThisEvent);
   return true;
 }
 
@@ -198,7 +195,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
     case EnergyStandBy:
     {
 
-      if(ThisEvent.EventType == ES_ENERGY_GAME_START) //Connie
+      if((ThisEvent.EventType == START_GAME) && (ThisEvent.EventParam == 1))
       {
         puts("Energy game started \r\n");
         //post event to game service to 
@@ -248,7 +245,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       {
         //1. Play coalplant audio
       }
-      else if(ThisEvent.EventType == ES_RESET_ALL_GAMES) //to be modified by Connie
+      else if(ThisEvent.EventType == RESET_ALL_GAMES)
       {
       	//1. Stop playing coalplant audio directly
       	//2. Function to reset sun to original position
@@ -298,7 +295,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         energy_level = EvaluateSolarAlignment();
         SR_WriteEnergy(2*energy_level);
       }
-      else if(ThisEvent.EventType == ES_RESET_ALL_GAMES)
+      else if(ThisEvent.EventType == RESET_ALL_GAMES)
       {
         //Move sun to initial position by calling that service
         MoveSunEvent.EventType = ES_MOVE_SUN;
@@ -351,9 +348,8 @@ bool CheckSolarPanelPosition(void)
     puts("Solarpanel position changed by threshold \r\n");
   	ThisEvent.EventType = ES_SOLARPOS_CHANGE;
   	PostEnergyProduction(ThisEvent);
-  	AnyEvent.EventType = ES_USERMVT_DETECTED;
-  	//Post ES_USERMVT_DETECTED to game manager //Connie
-  	//PostGameManager(AnyEvent);
+  	AnyEvent.EventType = USERMVT_DETECTED;
+    PostGameManager(AnyEvent);
     ReturnVal = true;
     LastSolarPanelVoltage = CurrentSolarPanelVoltage;
   }
@@ -395,17 +391,15 @@ bool CheckSmokeTowerEvents(void)
     {
       ThisEvent.EventType = ES_TOWER_PLUGGED;
       PostEnergyProduction(ThisEvent);
-      AnyEvent.EventType = ES_USERMVT_DETECTED;
-      //Post ES_USERMVT_DETECTED to game manager //Connie
-      //PostGameManager(AnyEvent);
+      AnyEvent.EventType = USERMVT_DETECTED;
+      PostGameManager(AnyEvent);
     }
     else
     {   
       ThisEvent.EventType = ES_TOWER_UNPLUGGED;
       PostEnergyProduction(ThisEvent);
-      AnyEvent.EventType = ES_USERMVT_DETECTED;
-      //Post ES_USERMVT_DETECTED to game manager //Connie
-      //PostGameManager(AnyEvent);
+      AnyEvent.EventType = USERMVT_DETECTED;
+      PostGameManager(AnyEvent);
     }
   } 
   LastSmokeTowerState = CurrentSmokeTowerState;
@@ -437,7 +431,7 @@ bool CheckSmokeTowerEvents(void)
 ****************************************************************************/
 static uint32_t ReadSolarPanelPosition(void)
 {
-  uint32_t SolarPanelPosition[1]; //Connie, change to [2]
+  uint32_t SolarPanelPosition[2];
   //Read analog input pin 
   ADC_MultiRead(SolarPanelPosition); 
   //printf("Solar panel position: %d \r\n", SolarPanelPosition[0]);

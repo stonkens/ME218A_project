@@ -4,8 +4,6 @@
  Description
      This file contains macro definitions that are edited by the user to
      adapt the Events and Services framework to a particular application.
-<<<<<<< HEAD
-=======
  Notes
 
  History
@@ -23,7 +21,7 @@
                          functionality out of the framework and putting it
                          explicitly into the event checking functions
  01/15/12 10:03 jec      started coding
->>>>>>> sander
+
 *****************************************************************************/
 
 #ifndef ES_CONFIGURE_H
@@ -38,7 +36,7 @@
 /****************************************************************************/
 // This macro determines that nuber of services that are *actually* used in
 // a particular application. It will vary in value from 1 to MAX_NUM_SERVICES
-#define NUM_SERVICES 3
+#define NUM_SERVICES 6
 
 /****************************************************************************/
 // These are the definitions for Service 0, the lowest priority service.
@@ -46,19 +44,11 @@
 // services are added in numeric sequence (1,2,3,...) with increasing
 // priorities
 // the header file with the public function prototypes
-<<<<<<< HEAD
 #define SERV_0_HEADER "GameManager.h"
 // the name of the Init function
 #define SERV_0_INIT InitGameManager
 // the name of the run function
 #define SERV_0_RUN RunGameManager
-=======
-#define SERV_0_HEADER "MeatSwitchDebounce.h"
-// the name of the Init function
-#define SERV_0_INIT InitMeatSwitchDebounce
-// the name of the run function
-#define SERV_0_RUN RunMeatSwitchDebounceSM
->>>>>>> sander
 // How big should this services Queue be?
 #define SERV_0_QUEUE_SIZE 5
 
@@ -70,19 +60,11 @@
 // These are the definitions for Service 1
 #if NUM_SERVICES > 1
 // the header file with the public function prototypes
-<<<<<<< HEAD
-#define SERV_1_HEADER "ButtonDebounce.h"
-// the name of the Init function
-#define SERV_1_INIT InitButtonDebounce
-// the name of the run function
-#define SERV_1_RUN RunButtonDebounce
-=======
 #define SERV_1_HEADER "EnergyProduction.h"
 // the name of the Init function
 #define SERV_1_INIT InitEnergyProduction
 // the name of the run function
 #define SERV_1_RUN RunEnergyProductionSM
->>>>>>> sander
 // How big should this services Queue be?
 #define SERV_1_QUEUE_SIZE 3
 #endif
@@ -91,19 +73,11 @@
 // These are the definitions for Service 2
 #if NUM_SERVICES > 2
 // the header file with the public function prototypes
-<<<<<<< HEAD
 #define SERV_2_HEADER "VotingGame.h"
 // the name of the Init function
 #define SERV_2_INIT InitVotingGame
 // the name of the run function
 #define SERV_2_RUN RunVotingGame
-=======
-#define SERV_2_HEADER "SunMovement.h"
-// the name of the Init function
-#define SERV_2_INIT InitSunMovement
-// the name of the run function
-#define SERV_2_RUN RunSunMovement
->>>>>>> sander
 // How big should this services Queue be?
 #define SERV_2_QUEUE_SIZE 5
 #endif
@@ -112,39 +86,39 @@
 // These are the definitions for Service 3
 #if NUM_SERVICES > 3
 // the header file with the public function prototypes
-#define SERV_3_HEADER "TestHarnessService3.h"
+#define SERV_3_HEADER "MeatSwitchDebounce.h"
 // the name of the Init function
-#define SERV_3_INIT InitTestHarnessService3
+#define SERV_3_INIT InitMeatSwitchDebounce
 // the name of the run function
-#define SERV_3_RUN RunTestHarnessService3
+#define SERV_3_RUN RunMeatSwitchDebounceSM
 // How big should this services Queue be?
-#define SERV_3_QUEUE_SIZE 3
+#define SERV_3_QUEUE_SIZE 5
 #endif
 
 /****************************************************************************/
 // These are the definitions for Service 4
 #if NUM_SERVICES > 4
 // the header file with the public function prototypes
-#define SERV_4_HEADER "TestHarnessService4.h"
+#define SERV_4_HEADER "ButtonDebounce.h"
 // the name of the Init function
-#define SERV_4_INIT InitTestHarnessService4
+#define SERV_4_INIT InitButtonDebounce
 // the name of the run function
-#define SERV_4_RUN RunTestHarnessService4
+#define SERV_4_RUN RunButtonDebounce
 // How big should this services Queue be?
-#define SERV_4_QUEUE_SIZE 3
+#define SERV_4_QUEUE_SIZE 5
 #endif
 
 /****************************************************************************/
 // These are the definitions for Service 5
 #if NUM_SERVICES > 5
 // the header file with the public function prototypes
-#define SERV_5_HEADER "TestHarnessService5.h"
+#define SERV_5_HEADER "SunMovement.h"
 // the name of the Init function
-#define SERV_5_INIT InitTestHarnessService5
+#define SERV_5_INIT InitSunMovement
 // the name of the run function
-#define SERV_5_RUN RunTestHarnessService5
+#define SERV_5_RUN RunSunMovement
 // How big should this services Queue be?
-#define SERV_5_QUEUE_SIZE 3
+#define SERV_5_QUEUE_SIZE 5
 #endif
 
 /****************************************************************************/
@@ -289,37 +263,29 @@ typedef enum
   ES_SHORT_TIMEOUT,         /* signals that a short timer has expired */
 
   /* User-defined events start here */
-<<<<<<< HEAD
   LEAF_REMOVED,
   LEAF_IN_CORRECT,
   LEAF_IN_INCORRECT,
   PLAY_WELCOMING_AUDIO,
   WELCOMING_AUDIO_DONE,
   START_GAME,
-  USER_INPUT_DETECTED,
+  USERMVT_DETECTED,
   CHANGE_TEMP,
-  RESET_ALL_GAMES,
+  RESET_ALL_GAMES, //ES_RESET_ALL_GAMES
   VOTED_YES,
   VOTED_NO,
   SWITCH_HIT,
   BUTTON_DOWN,
-  BUTTON_UP
-} ES_EventType_t;
-=======
-  ES_NEW_KEY,               /* signals a new key received from terminal */
+  BUTTON_UP,
   DB_MEAT_SWITCH_DOWN,
   DB_MEAT_SWITCH_UP,
-  ES_ENERGY_GAME_START, //name to be modified based on Connie's params
   ES_TOWER_PLUGGED,
   ES_TOWER_UNPLUGGED,
   ES_AUDIO_END,
-  ES_RESET_ALL_GAMES, //name to be modified based on Connie's params
   ES_SOLARPOS_CHANGE,
   ES_MOVE_SUN,
-  ES_USERMVT_DETECTED
+} ES_EventType_t;
 
-}ES_EventType_t;
->>>>>>> sander
 
 /****************************************************************************/
 // These are the definitions for the Distribution lists. Each definition
@@ -353,12 +319,7 @@ typedef enum
 
 /****************************************************************************/
 // This is the list of event checking functions
-<<<<<<< HEAD
-#define EVENT_CHECK_LIST CheckLEAFInsertion, CheckButtonPress, Check4Keystroke
-=======
-#define EVENT_CHECK_LIST CheckMeatSwitchEvents, CheckSolarPanelPosition, CheckSmokeTowerEvents
->>>>>>> sander
-
+#define EVENT_CHECK_LIST CheckLEAFInsertion, CheckButtonPress, Check4Keystroke, CheckMeatSwitchEvents, CheckSolarPanelPosition, CheckSmokeTowerEvents
 /****************************************************************************/
 // These are the definitions for the post functions to be executed when the
 // corresponding timer expires. All 16 must be defined. If you are not using
@@ -366,7 +327,6 @@ typedef enum
 // Unlike services, any combination of timers may be used and there is no
 // priority in servicing them
 #define TIMER_UNUSED ((pPostFunc)0)
-<<<<<<< HEAD
 #define TIMER0_RESP_FUNC PostGameManager
 #define TIMER1_RESP_FUNC PostGameManager
 #define TIMER2_RESP_FUNC PostGameManager
@@ -374,17 +334,8 @@ typedef enum
 #define TIMER4_RESP_FUNC PostButtonDebounce
 #define TIMER5_RESP_FUNC PostButtonDebounce
 #define TIMER6_RESP_FUNC PostButtonDebounce
-=======
-#define TIMER0_RESP_FUNC PostMeatSwitchDebounce
-#define TIMER1_RESP_FUNC PostEnergyProduction
-#define TIMER2_RESP_FUNC TIMER_UNUSED
-#define TIMER3_RESP_FUNC TIMER_UNUSED
-#define TIMER4_RESP_FUNC TIMER_UNUSED
-#define TIMER5_RESP_FUNC TIMER_UNUSED
-#define TIMER6_RESP_FUNC TIMER_UNUSED
->>>>>>> sander
-#define TIMER7_RESP_FUNC TIMER_UNUSED
-#define TIMER8_RESP_FUNC TIMER_UNUSED
+#define TIMER7_RESP_FUNC PostMeatSwitchDebounce
+#define TIMER8_RESP_FUNC PostEnergyProduction
 #define TIMER9_RESP_FUNC TIMER_UNUSED
 #define TIMER10_RESP_FUNC TIMER_UNUSED
 #define TIMER11_RESP_FUNC TIMER_UNUSED
@@ -400,18 +351,13 @@ typedef enum
 // the timer number matches where the timer event will be routed
 // These symbolic names should be changed to be relevant to your application
 
-<<<<<<< HEAD
 #define NEXT_GAME_TIMER 0
 #define USER_INPUT_TIMER 1
 #define GAME_END_TIMER 2
 #define VOTE_TIMER 3
 #define BUTTON_TIMER 4
-
-=======
-#define DEBOUNCE_TIMER 0
-#define SUN_POSITION_TIMER 1
-#define TEST_HARNESS_TIMER 2
->>>>>>> sander
+#define DEBOUNCE_TIMER 7
+#define SUN_POSITION_TIMER 8
 
 /**************************************************************************/
 // uncomment this ine to get some basic framework operation debugging on

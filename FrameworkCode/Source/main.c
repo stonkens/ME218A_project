@@ -16,22 +16,15 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "inc/hw_types.h"
-#include "inc/hw_memmap.h"
-<<<<<<< HEAD
-#include "inc/hw_gpio.h"
-#include "inc/hw_sysctl.h"
-=======
-
 // the headers to access the GPIO subsystem
-#include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
+#include "inc/hw_memmap.h"
+
 #include "inc/hw_gpio.h"
 #include "inc/hw_sysctl.h"
-#include "termio.h"
+
 
 // the headers to access the TivaWare Library
->>>>>>> sander
 #include "driverlib/sysctl.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/gpio.h"
@@ -39,13 +32,14 @@
 #include "driverlib/interrupt.h"
 
 #include "ES_Configure.h"
+#include "ADMulti.h"
 #include "ES_Framework.h"
 #include "ES_Port.h"
 #include "termio.h"
 #include "EnablePA25_PB23_PD7_PF0.h"
 
 #include "EnergyProduction.h"
-
+#include "ShiftRegisterWrite.h"
 #include "BITDEFS.H"
 
 #define clrScrn() printf("\x1b[2J")
@@ -71,19 +65,15 @@ int main(void)
   // or assign to alternate any functions available on those pins
   PortFunctionInit();
 
-<<<<<<< HEAD
   // hardware initialization
   HWREG(SYSCTL_RCGCGPIO) |= BIT3HI; // Port D
   while (!(HWREG(SYSCTL_PRGPIO) & BIT3HI));
   HWREG(SYSCTL_RCGCGPIO) |= BIT5HI; // Port F
   while (!(HWREG(SYSCTL_PRGPIO) & BIT5HI));
-=======
-  // Your hardware initialization function calls go here
-  HWREG(SYSCTL_RCGCGPIO) |= BIT1HI;
-  while((HWREG(SYSCTL_RCGCGPIO) & BIT1HI) != BIT1HI)
-  {
-  }
->>>>>>> sander
+
+  HWREG(SYSCTL_RCGCGPIO) |= BIT1HI; // Port B
+  while (!(HWREG(SYSCTL_PRGPIO) & BIT1HI));
+  ADC_MultiInit(2); //to be placed in main.c
 
   // now initialize the Events and Services Framework and start it running
   ErrorType = ES_Initialize(ES_Timer_RATE_1mS);

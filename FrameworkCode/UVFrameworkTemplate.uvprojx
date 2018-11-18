@@ -476,11 +476,11 @@
               <FilePath>.\Source\ButtonDebounce.c</FilePath>
             </File>
             <File>
-<<<<<<< HEAD
               <FileName>VotingGame.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Source\VotingGame.c</FilePath>
-=======
+            </File>
+            <File>
               <FileName>EnergyProduction.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Source\EnergyProduction.c</FilePath>
@@ -504,7 +504,6 @@
               <FileName>ADMulti.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Source\ADMulti.c</FilePath>
->>>>>>> sander
             </File>
           </Files>
         </Group>
@@ -635,11 +634,6 @@
               <FileName>EnergyProduction.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Headers\EnergyProduction.h</FilePath>
-            </File>
-            <File>
-              <FileName>ES_EventCheckWrapper.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Headers\ES_EventCheckWrapper.h</FilePath>
             </File>
             <File>
               <FileName>MeatSwitchDebounce.h</FileName>

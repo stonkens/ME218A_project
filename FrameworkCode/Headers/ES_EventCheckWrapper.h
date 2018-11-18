@@ -20,9 +20,6 @@
 #include "ButtonDebounce.h"
 #include "EventCheckers.h"
 #include "VotingGame.h"
-
-// Here you would #include the header files for any other modules that
-// contained event checking functions
 #include "MeatSwitchDebounce.h"
 #include "EnergyProduction.h"
 

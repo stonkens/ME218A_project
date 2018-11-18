@@ -73,7 +73,8 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
             }
             else if ((ThisEvent.EventType == VOTED_YES) || (ThisEvent.EventType == VOTED_NO)) {
                 ES_Event_t Event2Post;
-                Event2Post.EventType = USER_INPUT_DETECTED;
+                Event2Post.EventType = USERMVT_DETECTED;
+                PostGameManager(Event2Post);
             }
             break;
 
@@ -86,7 +87,7 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 puts("User voted YES.\r\n");
                 ES_Timer_StopTimer(VOTE_TIMER);
                 ES_Event_t Event2Post;
-                Event2Post.EventType = USER_INPUT_DETECTED;
+                Event2Post.EventType = USERMVT_DETECTED;
                 PostGameManager(Event2Post);
 
                 // evaluate vote
@@ -100,7 +101,7 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 puts("User voted NO.\r\n");
                 ES_Timer_StopTimer(VOTE_TIMER);
                 ES_Event_t Event2Post;
-                Event2Post.EventType = USER_INPUT_DETECTED;
+                Event2Post.EventType = USERMVT_DETECTED;
                 PostGameManager(Event2Post);
 
                 // evaluate vote

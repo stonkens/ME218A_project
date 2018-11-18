@@ -23,6 +23,9 @@
 // #include "AudioService.h"
 // include the header files of all games (need access to post functions)
 #include "VotingGame.h"
+#include "EnergyProduction.h"
+#include "ShiftRegisterWrite.h"
+#include "MeatSwitchDebounce.h"
 
 
 /****************************** Private Functions & Variables **************************/
@@ -38,7 +41,7 @@ bool InitGameManager(uint8_t Priority) {
         LEAF_DETECTOR_PORT0;
     LEAF1LastState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + ALL_BITS) & 
         LEAF_DETECTOR_PORT1;
-
+    SR_Init();
     ES_Event_t InitEvent;
     InitEvent.EventType = ES_INIT;
     if (ES_PostToService(MyPriority, InitEvent) == true) {
@@ -83,7 +86,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 Event2Post.EventType = PLAY_WELCOMING_AUDIO;
                 // PostAudioService(Event2Post);
                 // turn on thermometer LEDs
-                // SR_WriteTemperature(Temperature);
+                SR_WriteTemperature(Temperature);
                 puts("LEAF inserted correctly. Going into welcome mode.\r\n");
                 CurrentState = WelcomeMode;                
             }
@@ -94,7 +97,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 ES_Event_t Event2Post;
                 Event2Post.EventType = START_GAME;
                 Event2Post.EventParam = 1;
-                // PostEnergyGame(Event2Post);
+                PostEnergyProduction(Event2Post);
                 NumOfActiveGames ++;
                 puts("Starting first game.\r\n");
 
@@ -106,7 +109,8 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
             }
             else if (ThisEvent.EventType == LEAF_REMOVED) {
                 
-                // maybe add turn off all LED function to SR?
+                // maybe add turn off all LED function to SR? --> Adds
+                SR_Write(0);
                 // SR_WriteTemperature(0);
 
                 ES_Event_t Event2Post;
@@ -127,7 +131,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                     if (NumOfActiveGames == 2) {
                         ES_Timer_InitTimer(NEXT_GAME_TIMER, 10000);
                         Event2Post.EventParam = 2;
-                        // PostMeatGame(Event2Post)
+                        PostMeatSwitchDebounce(Event2Post);
                         puts("10s timer expired: starting second game.\r\n");
                     }
                     else if (NumOfActiveGames == 3) {
@@ -143,7 +147,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
             else if (((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
                 USER_INPUT_TIMER))) {
                 puts("No user input detected for 30s, or LEAF removed. Resetting all games.\r\n");
-                // SR_WriteTemperature(0);
+                SR_WriteTemperature(0);
                 ES_Event_t Event2Post;
                 Event2Post.EventType = RESET_ALL_GAMES;
                 // post event to distribution list
@@ -151,7 +155,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 CurrentState = Standby;
             }
                 
-            else if (ThisEvent.EventType == USER_INPUT_DETECTED) {
+            else if (ThisEvent.EventType == USERMVT_DETECTED) {
                 ES_Timer_InitTimer(USER_INPUT_TIMER, 30000);
                 puts("Resetting 30s timer.\r\n");
             }
