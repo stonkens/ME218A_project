@@ -104,6 +104,7 @@ bool Check4Lock(void)
  Author
    J. Edward Carryer, 08/06/13, 13:48
 ****************************************************************************/
+<<<<<<< HEAD
 bool Check4Keystroke(void)
 {
   if (IsNewKeyReady())   // new key waiting?
@@ -138,3 +139,7 @@ bool Check4Keystroke(void)
   }
   return false;
 }
+=======
+
+
+>>>>>>> sander

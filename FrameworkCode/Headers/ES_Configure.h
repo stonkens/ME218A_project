@@ -4,6 +4,26 @@
  Description
      This file contains macro definitions that are edited by the user to
      adapt the Events and Services framework to a particular application.
+<<<<<<< HEAD
+=======
+ Notes
+
+ History
+ When           Who     What/Why
+ -------------- ---     --------
+ 11/12/18 10:01  ston    Added in 1 service (MeatSwitch) and 1 SM (SolarPanel)
+                         and respective events
+ 12/19/16 20:19  jec     removed EVENT_CHECK_HEADER definition. This goes with
+                         the V2.3 move to a single wrapper for event checking
+                         headers
+  10/11/15 18:00 jec     added new event type ES_SHORT_TIMEOUT
+  10/21/13 20:54 jec     lots of added entries to bring the number of timers
+                         and services up to 16 each
+ 08/06/13 14:10 jec      removed PostKeyFunc stuff since we are moving that
+                         functionality out of the framework and putting it
+                         explicitly into the event checking functions
+ 01/15/12 10:03 jec      started coding
+>>>>>>> sander
 *****************************************************************************/
 
 #ifndef ES_CONFIGURE_H
@@ -26,11 +46,19 @@
 // services are added in numeric sequence (1,2,3,...) with increasing
 // priorities
 // the header file with the public function prototypes
+<<<<<<< HEAD
 #define SERV_0_HEADER "GameManager.h"
 // the name of the Init function
 #define SERV_0_INIT InitGameManager
 // the name of the run function
 #define SERV_0_RUN RunGameManager
+=======
+#define SERV_0_HEADER "MeatSwitchDebounce.h"
+// the name of the Init function
+#define SERV_0_INIT InitMeatSwitchDebounce
+// the name of the run function
+#define SERV_0_RUN RunMeatSwitchDebounceSM
+>>>>>>> sander
 // How big should this services Queue be?
 #define SERV_0_QUEUE_SIZE 5
 
@@ -42,11 +70,19 @@
 // These are the definitions for Service 1
 #if NUM_SERVICES > 1
 // the header file with the public function prototypes
+<<<<<<< HEAD
 #define SERV_1_HEADER "ButtonDebounce.h"
 // the name of the Init function
 #define SERV_1_INIT InitButtonDebounce
 // the name of the run function
 #define SERV_1_RUN RunButtonDebounce
+=======
+#define SERV_1_HEADER "EnergyProduction.h"
+// the name of the Init function
+#define SERV_1_INIT InitEnergyProduction
+// the name of the run function
+#define SERV_1_RUN RunEnergyProductionSM
+>>>>>>> sander
 // How big should this services Queue be?
 #define SERV_1_QUEUE_SIZE 3
 #endif
@@ -55,11 +91,19 @@
 // These are the definitions for Service 2
 #if NUM_SERVICES > 2
 // the header file with the public function prototypes
+<<<<<<< HEAD
 #define SERV_2_HEADER "VotingGame.h"
 // the name of the Init function
 #define SERV_2_INIT InitVotingGame
 // the name of the run function
 #define SERV_2_RUN RunVotingGame
+=======
+#define SERV_2_HEADER "SunMovement.h"
+// the name of the Init function
+#define SERV_2_INIT InitSunMovement
+// the name of the run function
+#define SERV_2_RUN RunSunMovement
+>>>>>>> sander
 // How big should this services Queue be?
 #define SERV_2_QUEUE_SIZE 5
 #endif
@@ -245,6 +289,7 @@ typedef enum
   ES_SHORT_TIMEOUT,         /* signals that a short timer has expired */
 
   /* User-defined events start here */
+<<<<<<< HEAD
   LEAF_REMOVED,
   LEAF_IN_CORRECT,
   LEAF_IN_INCORRECT,
@@ -260,12 +305,27 @@ typedef enum
   BUTTON_DOWN,
   BUTTON_UP
 } ES_EventType_t;
+=======
+  ES_NEW_KEY,               /* signals a new key received from terminal */
+  DB_MEAT_SWITCH_DOWN,
+  DB_MEAT_SWITCH_UP,
+  ES_ENERGY_GAME_START, //name to be modified based on Connie's params
+  ES_TOWER_PLUGGED,
+  ES_TOWER_UNPLUGGED,
+  ES_AUDIO_END,
+  ES_RESET_ALL_GAMES, //name to be modified based on Connie's params
+  ES_SOLARPOS_CHANGE,
+  ES_MOVE_SUN,
+  ES_USERMVT_DETECTED
+
+}ES_EventType_t;
+>>>>>>> sander
 
 /****************************************************************************/
 // These are the definitions for the Distribution lists. Each definition
 // should be a comma separated list of post functions to indicate which
 // services are on that distribution list.
-#define NUM_DIST_LISTS 1
+#define NUM_DIST_LISTS 0
 #if NUM_DIST_LISTS > 0
 #define DIST_LIST0 PostGameManager // PostEnergyGame, PostMeatGame, PostVotingGame
 #endif
@@ -293,7 +353,11 @@ typedef enum
 
 /****************************************************************************/
 // This is the list of event checking functions
+<<<<<<< HEAD
 #define EVENT_CHECK_LIST CheckLEAFInsertion, CheckButtonPress, Check4Keystroke
+=======
+#define EVENT_CHECK_LIST CheckMeatSwitchEvents, CheckSolarPanelPosition, CheckSmokeTowerEvents
+>>>>>>> sander
 
 /****************************************************************************/
 // These are the definitions for the post functions to be executed when the
@@ -302,6 +366,7 @@ typedef enum
 // Unlike services, any combination of timers may be used and there is no
 // priority in servicing them
 #define TIMER_UNUSED ((pPostFunc)0)
+<<<<<<< HEAD
 #define TIMER0_RESP_FUNC PostGameManager
 #define TIMER1_RESP_FUNC PostGameManager
 #define TIMER2_RESP_FUNC PostGameManager
@@ -309,6 +374,15 @@ typedef enum
 #define TIMER4_RESP_FUNC PostButtonDebounce
 #define TIMER5_RESP_FUNC PostButtonDebounce
 #define TIMER6_RESP_FUNC PostButtonDebounce
+=======
+#define TIMER0_RESP_FUNC PostMeatSwitchDebounce
+#define TIMER1_RESP_FUNC PostEnergyProduction
+#define TIMER2_RESP_FUNC TIMER_UNUSED
+#define TIMER3_RESP_FUNC TIMER_UNUSED
+#define TIMER4_RESP_FUNC TIMER_UNUSED
+#define TIMER5_RESP_FUNC TIMER_UNUSED
+#define TIMER6_RESP_FUNC TIMER_UNUSED
+>>>>>>> sander
 #define TIMER7_RESP_FUNC TIMER_UNUSED
 #define TIMER8_RESP_FUNC TIMER_UNUSED
 #define TIMER9_RESP_FUNC TIMER_UNUSED
@@ -326,12 +400,18 @@ typedef enum
 // the timer number matches where the timer event will be routed
 // These symbolic names should be changed to be relevant to your application
 
+<<<<<<< HEAD
 #define NEXT_GAME_TIMER 0
 #define USER_INPUT_TIMER 1
 #define GAME_END_TIMER 2
 #define VOTE_TIMER 3
 #define BUTTON_TIMER 4
 
+=======
+#define DEBOUNCE_TIMER 0
+#define SUN_POSITION_TIMER 1
+#define TEST_HARNESS_TIMER 2
+>>>>>>> sander
 
 /**************************************************************************/
 // uncomment this ine to get some basic framework operation debugging on
