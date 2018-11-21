@@ -25,8 +25,8 @@
 #define DEBOUNCE_TIME 200
 // port D
 #define YES_BUTTON_PORT BIT1HI
-#define NO_BUTTON_PORT BIT0HI
-#define SWITCH_PORT BIT2HI
+#define NO_BUTTON_PORT BIT2HI
+#define SWITCH_PORT BIT3HI
 
 static uint8_t MyPriority;
 // use lines on Port D

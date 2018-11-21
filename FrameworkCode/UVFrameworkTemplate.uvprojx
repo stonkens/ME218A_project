@@ -505,6 +505,11 @@
               <FileType>1</FileType>
               <FilePath>.\Source\ADMulti.c</FilePath>
             </File>
+            <File>
+              <FileName>PWM16Tiva.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Source\PWM16Tiva.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -654,6 +659,11 @@
               <FileName>ADMulti.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Headers\ADMulti.h</FilePath>
+            </File>
+            <File>
+              <FileName>PWM16Tiva.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Headers\PWM16Tiva.h</FilePath>
             </File>
           </Files>
         </Group>
