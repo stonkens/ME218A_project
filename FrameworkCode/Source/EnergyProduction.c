@@ -50,6 +50,7 @@
 
 #define ONE_SEC 1000
 #define FIVE_SEC (ONE_SEC*5)
+#define TEN_SEC (ONE_SEC*10)
 #define V_INCREMENT_FIVE_SEC 0 //To be changed
 
 // flexibility defines
@@ -169,6 +170,8 @@ Parameters
 ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
 {
   ES_Event_t ReturnEvent;
+  ES_Event_t TemperatureChange;
+
 
   //Default return event
   ReturnEvent.EventType = ES_NO_EVENT;
@@ -206,6 +209,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         SR_WriteEnergy(6);
         //Initiate 5 s timer
         ES_Timer_InitTimer(SUN_POSITION_TIMER, FIVE_SEC);
+        ES_Timer_InitTimer(COAL_ACTIVE_TIMER, FIVE_SEC);
         CurrentEnergyState = CoalPowered;
 
       }
@@ -227,6 +231,28 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         //Initiate 5 s timer
         ES_Timer_InitTimer(SUN_POSITION_TIMER, FIVE_SEC);
       }
+      else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == COAL_ACTIVE_TIMER))
+      {
+        //Turn 1 temperature LED on
+        TemperatureChange.EventType = CHANGE_TEMP;
+        TemperatureChange.EventParam = 2;
+        puts("Temp up by 1, too long in coal power state\r\n");
+        PostGameManager(TemperatureChange);
+        ES_Timer_InitTimer(COAL_ACTIVE_TIMER, FIVE_SEC);
+        //to add in: Play "sad" audio tune
+      }
+      else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SOLAR_ACTIVE_TIMER))
+      {
+        //It could be that we changed to new state already whilst this event was still in the queue
+        //Turn 1 temperature LED off
+        TemperatureChange.EventType = CHANGE_TEMP;
+        TemperatureChange.EventParam = 1;
+        puts("Temp down by 1, enough solar energy produced\r\n");
+        PostGameManager(TemperatureChange);
+        ES_Timer_InitTimer(SOLAR_ACTIVE_TIMER, TEN_SEC);
+        //to add in: Play "happy" audio tune
+        //optional: Have it depend on number of leds that are on (either currently or in the past 10 seconds an average) --> How to??
+      }
       else if(ThisEvent.EventType == ES_TOWER_PLUGGED)
       {
         puts("Tower plugged, move to SolarPowered state \r\n");
@@ -240,6 +266,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         energy_level = EvaluateSolarAlignment();
         SR_WriteEnergy(2*energy_level);
         CurrentEnergyState = SolarPowered;
+        ES_Timer_InitTimer(SOLAR_ACTIVE_TIMER, TEN_SEC);
       }
       else if((ThisEvent.EventType == ES_AUDIO_END) && (ThisEvent.EventParam == COAL_AUDIO))
       {
@@ -269,6 +296,29 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         //3. turn on energy leds with parameter all
         SR_WriteEnergy(6);
         CurrentEnergyState = CoalPowered;
+        ES_Timer_InitTimer(COAL_ACTIVE_TIMER, FIVE_SEC);
+      }
+      else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == COAL_ACTIVE_TIMER))
+      {
+        //It could be that we changed to new state already whilst this event was still in the queue
+        //Turn 1 temperature LED on
+        TemperatureChange.EventType = CHANGE_TEMP;
+        TemperatureChange.EventParam = 2;
+        puts("Temp up by 1, too long in coal power state\r\n");
+        PostGameManager(TemperatureChange);
+        ES_Timer_InitTimer(COAL_ACTIVE_TIMER, FIVE_SEC);
+        //to add in: Play "sad" audio tune
+      }
+      else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SOLAR_ACTIVE_TIMER))
+      {
+        //Turn 1 temperature LED off
+        TemperatureChange.EventType = CHANGE_TEMP;
+        TemperatureChange.EventParam = 1;
+        puts("Temp down by 1, enough solar energy produced\r\n");
+        PostGameManager(TemperatureChange);
+        ES_Timer_InitTimer(SOLAR_ACTIVE_TIMER, TEN_SEC);
+        //to add in: Play "happy" audio tune
+        //optional: Have it depend on number of leds that are on (either currently or in the past 10 seconds an average) --> How to??
       }
       else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SUN_POSITION_TIMER))
       {
@@ -386,7 +436,7 @@ bool CheckSmokeTowerEvents(void)
   if(CurrentSmokeTowerState != LastSmokeTowerState)
   {
     ReturnVal = true;
-    //If the CurrentSmokeTowerState is down   
+    //If the CurrentSmokeTowerState is down     
     if (CurrentSmokeTowerState == 0)
     {
       ThisEvent.EventType = ES_TOWER_PLUGGED;

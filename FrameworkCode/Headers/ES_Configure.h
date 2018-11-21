@@ -336,8 +336,8 @@ typedef enum
 #define TIMER6_RESP_FUNC PostButtonDebounce
 #define TIMER7_RESP_FUNC PostMeatSwitchDebounce
 #define TIMER8_RESP_FUNC PostEnergyProduction
-#define TIMER9_RESP_FUNC TIMER_UNUSED
-#define TIMER10_RESP_FUNC TIMER_UNUSED
+#define TIMER9_RESP_FUNC PostEnergyProduction
+#define TIMER10_RESP_FUNC PostEnergyProduction
 #define TIMER11_RESP_FUNC TIMER_UNUSED
 #define TIMER12_RESP_FUNC TIMER_UNUSED
 #define TIMER13_RESP_FUNC TIMER_UNUSED
@@ -358,6 +358,8 @@ typedef enum
 #define BUTTON_TIMER 4
 #define DEBOUNCE_TIMER 7
 #define SUN_POSITION_TIMER 8
+#define COAL_ACTIVE_TIMER 9
+#define SOLAR_ACTIVE_TIMER 10
 
 /**************************************************************************/
 // uncomment this ine to get some basic framework operation debugging on
