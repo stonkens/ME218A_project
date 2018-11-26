@@ -1,17 +1,15 @@
 /****************************************************************************************
 *   GameManager.c
 *   
-* 
+*   to do's: modify LEAF event checker to be analog; game over event; change temp event
 *
 ****************************************************************************************/
 // PORT D
-#define LEAF_DETECTOR_PORT0 BIT6HI
-#define LEAF_DETECTOR_PORT1 BIT7HI
+#define LEAF_DETECTOR_PORT BIT6HI
 #define TEMP_LED_NUM 8
 
 #include "GameManager.h"
 #include "ES_Framework.h"
-
 
 // the headers to access the GPIO subsystem
 #include "inc/hw_memmap.h"
@@ -19,28 +17,24 @@
 #include "inc/hw_gpio.h"
 #include "inc/hw_sysctl.h"
 
-// #include "ShiftRegisterWrite.h"
-// #include "AudioService.h"
 // include the header files of all games (need access to post functions)
 #include "VotingGame.h"
 #include "EnergyProduction.h"
 #include "ShiftRegisterWrite.h"
 #include "MeatSwitchDebounce.h"
 
+#include "AudioService.h"
 
 /****************************** Private Functions & Variables **************************/
-static uint8_t LEAF0LastState;
-static uint8_t LEAF1LastState;
+static uint8_t LEAFSwitchLastState;
 static uint8_t MyPriority;
 static GameManagerState CurrentState = InitGState;
 
 bool InitGameManager(uint8_t Priority) {
     // initialize ports (already set to input by default)
-    HWREG(GPIO_PORTD_BASE + GPIO_O_DEN) |= (LEAF_DETECTOR_PORT0|LEAF_DETECTOR_PORT1);
-    LEAF0LastState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + ALL_BITS) & 
-        LEAF_DETECTOR_PORT0;
-    LEAF1LastState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + ALL_BITS) & 
-        LEAF_DETECTOR_PORT1;
+    HWREG(GPIO_PORTD_BASE + GPIO_O_DEN) |= LEAF_DETECTOR_PORT;
+    LEAFSwitchLastState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + ALL_BITS) & 
+        LEAF_DETECTOR_PORT;
     SR_Init();
     ES_Event_t InitEvent;
     InitEvent.EventType = ES_INIT;
@@ -83,8 +77,9 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
             else if (ThisEvent.EventType == LEAF_IN_CORRECT) {
                 // play welcoming audio
                 ES_Event_t Event2Post;
-                Event2Post.EventType = PLAY_WELCOMING_AUDIO;
-                // PostAudioService(Event2Post);
+                Event2Post.EventType = PLAY_AUDIO;
+                Event2Post.EventParam = WELCOMING_TRACK;
+                PostAudioService(Event2Post);
                 // turn on thermometer LEDs
                 SR_WriteTemperature(Temperature);
                 puts("LEAF inserted correctly. Going into welcome mode.\r\n");
@@ -93,7 +88,8 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
             break;
 
         case WelcomeMode:
-            if (ThisEvent.EventType == WELCOMING_AUDIO_DONE) {
+            if ((ThisEvent.EventType == AUDIO_DONE) && 
+                (ThisEvent.EventParam == WELCOMING_TRACK)) {
                 ES_Event_t Event2Post;
                 Event2Post.EventType = START_GAME;
                 Event2Post.EventParam = 1;
@@ -142,10 +138,10 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 }
             }
 
-            /* else if (((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
-                USR_INPUT_TIMER)) || (ThisEvent.EventType == LEAF_REMOVED)) { */
             else if (((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
-                USER_INPUT_TIMER))) {
+                USER_INPUT_TIMER)) || (ThisEvent.EventType == LEAF_REMOVED)) {
+            /* else if (((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
+                USER_INPUT_TIMER))) { */
                 puts("No user input detected for 30s, or LEAF removed. Resetting all games.\r\n");
                 SR_WriteTemperature(0);
                 ES_Event_t Event2Post;
@@ -187,17 +183,17 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
 
 bool CheckLEAFInsertion() {
-    uint8_t LEAF0CurrState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + 
-        ALL_BITS) & LEAF_DETECTOR_PORT0;
-    if (LEAF0CurrState != LEAF0LastState) {
-      ES_Event_t Event2Post;  
-      if (LEAF0CurrState)
-          Event2Post.EventType = LEAF_REMOVED;
-      else
-          Event2Post.EventType = LEAF_IN_CORRECT;
-      ES_PostToService(MyPriority, Event2Post);
-      LEAF0LastState = LEAF0CurrState;
-      return true;
+    uint8_t LEAFSwitchCurrentState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + 
+        ALL_BITS) & LEAF_DETECTOR_PORT;
+    if (LEAFSwitchCurrentState != LEAFSwitchLastState) {
+        ES_Event_t Event2Post;  
+        if (LEAFSwitchCurrentState)
+            Event2Post.EventType = LEAF_REMOVED;
+        else
+            Event2Post.EventType = LEAF_IN_CORRECT;
+        ES_PostToService(MyPriority, Event2Post);
+        LEAFSwitchLastState = LEAFSwitchCurrentState;
+        return true;
     }
   
 /*  

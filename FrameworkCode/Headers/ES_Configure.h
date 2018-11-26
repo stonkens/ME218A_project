@@ -36,7 +36,7 @@
 /****************************************************************************/
 // This macro determines that nuber of services that are *actually* used in
 // a particular application. It will vary in value from 1 to MAX_NUM_SERVICES
-#define NUM_SERVICES 6
+#define NUM_SERVICES 7
 
 /****************************************************************************/
 // These are the definitions for Service 0, the lowest priority service.
@@ -125,11 +125,11 @@
 // These are the definitions for Service 6
 #if NUM_SERVICES > 6
 // the header file with the public function prototypes
-#define SERV_6_HEADER "TestHarnessService6.h"
+#define SERV_6_HEADER "AudioService.h"
 // the name of the Init function
-#define SERV_6_INIT InitTestHarnessService6
+#define SERV_6_INIT InitAudioService
 // the name of the run function
-#define SERV_6_RUN RunTestHarnessService6
+#define SERV_6_RUN RunAudioService
 // How big should this services Queue be?
 #define SERV_6_QUEUE_SIZE 3
 #endif
@@ -266,8 +266,11 @@ typedef enum
   LEAF_REMOVED,
   LEAF_IN_CORRECT,
   LEAF_IN_INCORRECT,
-  PLAY_WELCOMING_AUDIO,
-  WELCOMING_AUDIO_DONE,
+  PLAY_AUDIO,
+  AUDIO_DONE,
+  STOP_AUDIO,
+  PLAY_LOOP,
+  STOP_LOOP,
   START_GAME,
   USERMVT_DETECTED,
   CHANGE_TEMP,
@@ -338,7 +341,7 @@ typedef enum
 #define TIMER8_RESP_FUNC PostEnergyProduction
 #define TIMER9_RESP_FUNC PostEnergyProduction
 #define TIMER10_RESP_FUNC PostEnergyProduction
-#define TIMER11_RESP_FUNC TIMER_UNUSED
+#define TIMER11_RESP_FUNC PostAudioService
 #define TIMER12_RESP_FUNC TIMER_UNUSED
 #define TIMER13_RESP_FUNC TIMER_UNUSED
 #define TIMER14_RESP_FUNC TIMER_UNUSED
@@ -360,6 +363,7 @@ typedef enum
 #define SUN_POSITION_TIMER 8
 #define COAL_ACTIVE_TIMER 9
 #define SOLAR_ACTIVE_TIMER 10
+#define AUDIO_DEBOUNCE_TIMER 11
 
 /**************************************************************************/
 // uncomment this ine to get some basic framework operation debugging on

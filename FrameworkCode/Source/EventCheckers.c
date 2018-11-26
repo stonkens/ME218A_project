@@ -127,7 +127,8 @@ bool Check4Keystroke(void)
     }
     else if (Key == 'a')
     {
-      ThisEvent.EventType = WELCOMING_AUDIO_DONE;
+      ThisEvent.EventType = AUDIO_DONE;
+      ThisEvent.EventParam = WELCOMING_TRACK;
       PostGameManager(ThisEvent);
     }
     else if (Key == 'z')

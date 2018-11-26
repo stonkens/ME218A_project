@@ -249,7 +249,6 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         TemperatureChange.EventParam = 1;
         puts("Temp down by 1, enough solar energy produced\r\n");
         PostGameManager(TemperatureChange);
-        ES_Timer_InitTimer(SOLAR_ACTIVE_TIMER, TEN_SEC);
         //to add in: Play "happy" audio tune
         //optional: Have it depend on number of leds that are on (either currently or in the past 10 seconds an average) --> How to??
       }
@@ -306,7 +305,6 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         TemperatureChange.EventParam = 2;
         puts("Temp up by 1, too long in coal power state\r\n");
         PostGameManager(TemperatureChange);
-        ES_Timer_InitTimer(COAL_ACTIVE_TIMER, FIVE_SEC);
         //to add in: Play "sad" audio tune
       }
       else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SOLAR_ACTIVE_TIMER))
