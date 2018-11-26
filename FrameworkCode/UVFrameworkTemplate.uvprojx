@@ -510,6 +510,11 @@
               <FileType>1</FileType>
               <FilePath>.\Source\PWM16Tiva.c</FilePath>
             </File>
+            <File>
+              <FileName>AudioService.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Source\AudioService.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -664,6 +669,11 @@
               <FileName>PWM16Tiva.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Headers\PWM16Tiva.h</FilePath>
+            </File>
+            <File>
+              <FileName>AudioService.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Headers\AudioService.h</FilePath>
             </File>
           </Files>
         </Group>
