@@ -342,7 +342,7 @@ typedef enum
 #define TIMER9_RESP_FUNC PostEnergyProduction
 #define TIMER10_RESP_FUNC PostEnergyProduction
 #define TIMER11_RESP_FUNC PostAudioService
-#define TIMER12_RESP_FUNC TIMER_UNUSED
+#define TIMER12_RESP_FUNC PostGameManager
 #define TIMER13_RESP_FUNC TIMER_UNUSED
 #define TIMER14_RESP_FUNC TIMER_UNUSED
 #define TIMER15_RESP_FUNC TIMER_UNUSED
@@ -364,6 +364,7 @@ typedef enum
 #define COAL_ACTIVE_TIMER 9
 #define SOLAR_ACTIVE_TIMER 10
 #define AUDIO_DEBOUNCE_TIMER 11
+#define BLINK_TIMER 12
 
 /**************************************************************************/
 // uncomment this ine to get some basic framework operation debugging on

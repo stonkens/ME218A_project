@@ -50,9 +50,9 @@
 #define GPIO_PORT GPIO_PORTB_BASE //configure B on electrical design
 
 //readability defines
-#define MEAT GPIO_PIN_3
-#define MEAT_HI BIT3HI
-#define MEAT_LO BIT3LO
+#define MEAT GPIO_PIN_4
+#define MEAT_HI BIT4HI
+#define MEAT_LO BIT4LO
 
 #define MEAT_TEMPCHANGE 4 //number of pieces of meat to change temperature
 

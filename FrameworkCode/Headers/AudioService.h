@@ -10,6 +10,7 @@
 
 #define WELCOMING_TRACK 1
 #define COAL_AUDIO 2
+#define CLOSING_TRACK 3
 
 #include "ES_Events.h"
 #include "ES_Types.h"

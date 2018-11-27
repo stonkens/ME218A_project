@@ -10,7 +10,6 @@
 #include "GameManager.h"
 #include "ES_Framework.h"
 #include "ADMulti.h"
-#include "ES_ShortTimer.h"
 
 // the headers to access the GPIO subsystem
 #include "inc/hw_memmap.h"
@@ -34,9 +33,9 @@
 #define AD_VOLTAGE(x) (int)(x*4095/3.3)
 
 #define REF_STATE1_HI 1.0
-#define REF_STATE2_LO 1.5
-#define REF_STATE2_HI 2.0
-#define REF_STATE3_LO 2.5
+#define REF_STATE2_LO 1.8
+#define REF_STATE2_HI 2.3
+#define REF_STATE3_LO 2.8
 
 
 #define REF_STATE1_HI_AD AD_VOLTAGE(REF_STATE1_HI) 
@@ -46,9 +45,9 @@
 
 #define INSERT 1
 #define REMOVE 2
-#define BLINK_TIME 500
+#define BLINK_TIME 1000
 
-#define LEAF_LED_BASE GPIO_PORTC_BASE
+#define LEAF_LED_PORT_BASE GPIO_PORTC_BASE
 #define LEAF_LED_TOP BIT4LO
 #define LEAF_LED_MID BIT5LO
 #define LEAF_LED_BOT BIT6LO
@@ -59,17 +58,16 @@ static uint8_t LEAFLastState;
 static uint8_t MyPriority;
 static GameManagerState CurrentState = InitGState;
 
-static uint32_t ReadLEAFState();
-static void BlinkNextLED();
+static uint32_t ReadLEAFState(void);
+static void BlinkNextLED(void);
 static uint8_t BlinkLEAFLights = 0;
 
 bool InitGameManager(uint8_t Priority) {
     // LEAF IR detector port initialized in ADCMultiInit
-    HWREG(LEAF_LED_BASE + GPIO_O_DEN) |= ~(LEAF_LED_TOP & LEAF_LED_MID & LEAF_LED_BOT);
-    HWREG(LEAF_LED_BASE + GPIO_O_DIR) |= ~(LEAF_LED_TOP & LEAF_LED_MID & LEAF_LED_BOT);
+    HWREG(LEAF_LED_PORT_BASE + GPIO_O_DEN) |= ~(LEAF_LED_TOP & LEAF_LED_MID & LEAF_LED_BOT);
+    HWREG(LEAF_LED_PORT_BASE + GPIO_O_DIR) |= ~(LEAF_LED_TOP & LEAF_LED_MID & LEAF_LED_BOT);
     SR_Init();
     MyPriority = Priority;
-    ES_ShortTimerInit(MyPriority, SHORT_TIMER_UNUSED);
     ES_Event_t InitEvent;
     InitEvent.EventType = ES_INIT;
     if (ES_PostToService(MyPriority, InitEvent) == true) {
@@ -99,7 +97,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 // light leds indicating direction to insert
                 BlinkLEAFLights = INSERT;
                 BlinkNextLED();
-                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
+                ES_Timer_InitTimer(BLINK_TIMER, BLINK_TIME);
             }
             else 
                 puts("Error: did not receive ES_INIT event.\r\n");
@@ -112,21 +110,22 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 puts("Reflectivity too high, LEAF inserted incorrectly.\r\n");
                 BlinkLEAFLights = REMOVE;
                 BlinkNextLED();
-                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
+                ES_Timer_InitTimer(BLINK_TIMER, BLINK_TIME);
             }
-            }
+            
             else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 1)) 
             {
                 puts("No leaf inserted. Please insert leaf\r\n");
                 BlinkLEAFLights = INSERT;
                 BlinkNextLED();
-                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
+                ES_Timer_InitTimer(BLINK_TIMER, BLINK_TIME);
             }
                 
-            }
+            
             else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 3))  
             {
                 BlinkLEAFLights = 0;
+                BlinkNextLED();
                 // play welcoming audio
                 ES_Event_t Event2Post;
                 Event2Post.EventType = PLAY_AUDIO;
@@ -138,10 +137,10 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 puts("LEAF inserted correctly. Going into welcome mode.\r\n");
                 CurrentState = WelcomeMode;                
             }
-            else if ((ThisEvent.EventType == ES_SHORT_TIMEOUT) && (ThisEvent.EventParam == TIMER_A) 
+            else if ((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == BLINK_TIMER) 
                 && BlinkLEAFLights) {
                 BlinkNextLED();
-                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
+                ES_Timer_InitTimer(BLINK_TIMER, BLINK_TIME);
             }
             break;
 
@@ -171,7 +170,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
                 BlinkLEAFLights = INSERT;
                 BlinkNextLED();
-                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
+                ES_Timer_InitTimer(BLINK_TIMER, BLINK_TIME);
 
                 CurrentState = Standby;
                 puts("LEAF removed; going back to standby.\r\n");
@@ -212,7 +211,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 
                 BlinkLEAFLights = REMOVE;
                 BlinkNextLED();
-                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
+                ES_Timer_InitTimer(BLINK_TIMER, BLINK_TIME);
                 CurrentState = Standby;
             }
 
@@ -226,7 +225,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 ES_PostList00(Event2Post);
                 BlinkLEAFLights = INSERT;
                 BlinkNextLED();
-                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
+                ES_Timer_InitTimer(BLINK_TIMER, BLINK_TIME);
                 CurrentState = Standby;
             }
 
@@ -263,12 +262,12 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 // light up LEDs to indicate user to remove LEAF
                 BlinkLEAFLights = REMOVE;
                 BlinkNextLED();
-                ES_ShortTimerStart(TIMER_A, BLINK_TIME);            
+                ES_Timer_InitTimer(BLINK_TIMER, BLINK_TIME);            
             }
-            else if ((ThisEvent.EventType == ES_SHORT_TIMEOUT) && (ThisEvent.EventParam == TIMER_A) 
+            else if ((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == BLINK_TIMER) 
                 && BlinkLEAFLights) {
                 BlinkNextLED();
-                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
+                ES_Timer_InitTimer(BLINK_TIMER, BLINK_TIME);
             }
             else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 1)) {
                 puts("LEAF removed. Resetting all games and going back to standby.");
@@ -279,7 +278,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
                 BlinkLEAFLights = INSERT;
                 BlinkNextLED();
-                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
+                ES_Timer_InitTimer(BLINK_TIMER, BLINK_TIME);
 
                 CurrentState = Standby;
             }
@@ -352,18 +351,25 @@ static uint32_t ReadLEAFState()
 
 static void BlinkNextLED() {
     static uint8_t i = 0;
+    if (!BlinkLEAFLights) {
+        // turn off all LEDs
+        HWREG(LEAF_LED_PORT_BASE + GPIO_O_DATA + ALL_BITS) |= ~(LEAF_LED_BOT & LEAF_LED_MID & LEAF_LED_TOP);
+        i = 0;
+        return;
+    }
+    puts("Blinking next light.\r\n");
     uint8_t LEDSequence[3] = {LEAF_LED_TOP, LEAF_LED_MID, LEAF_LED_BOT};
-    if (Direction == REMOVE) {
+    if (BlinkLEAFLights == REMOVE) {
         LEDSequence[0] = LEAF_LED_BOT;
         LEDSequence[2] = LEAF_LED_TOP;
     }
     if (i == 3) {
         // turn off all LEDs
-        HWREG(LEAF_PORT_BASE + GPIO_O_DATA + ALL_BITS) |= ~(LEAF_LED_BOT & LEAF_LED_MID & LEAF_LED_TOP);
+        HWREG(LEAF_LED_PORT_BASE + GPIO_O_DATA + ALL_BITS) |= ~(LEAF_LED_BOT & LEAF_LED_MID & LEAF_LED_TOP);
         i = 0;
     }
     else {
-        HWREG(LEAF_PORT_BASE + GPIO_O_DATA + ALL_BITS) &= LEDSequence[i];
+        HWREG(LEAF_LED_PORT_BASE + GPIO_O_DATA + ALL_BITS) &= LEDSequence[i];
         i++;
     }
 }

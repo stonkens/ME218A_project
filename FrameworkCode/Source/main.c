@@ -67,6 +67,8 @@ int main(void)
   PortFunctionInit();
 
   // hardware initialization
+  HWREG(SYSCTL_RCGCGPIO) |= BIT2HI; // Port C
+  while (!(HWREG(SYSCTL_PRGPIO) & BIT2HI));
   HWREG(SYSCTL_RCGCGPIO) |= BIT3HI; // Port D
   while (!(HWREG(SYSCTL_PRGPIO) & BIT3HI));
   HWREG(SYSCTL_RCGCGPIO) |= BIT5HI; // Port F

@@ -67,7 +67,6 @@
 #define V_WELLALIGNED 1000
 
 
-#define COAL_AUDIO 1
 
 
 // Private functions
@@ -82,7 +81,7 @@ static EnergyGameState CurrentEnergyState;
 static uint32_t LastSolarPanelVoltage;
 static bool LastSmokeTowerState;
 static uint32_t V_sun = 2000;
-static uint32_t V_threshold = 500;
+static uint32_t V_threshold = 600;
 
 
 
