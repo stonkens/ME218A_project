@@ -7,6 +7,8 @@
 // PORT F
 #define MOTOR_ON BIT4LO
 #define MOTOR_OFF BIT4HI
+#define ONE_SEC 1000
+#define FIVE_SEC (ONE_SEC*5)
 
 #include "VotingGame.h"
 #include "ES_Framework.h"
@@ -23,9 +25,9 @@ static uint8_t MyPriority;
 
 static VotingGameState CurrentState = InitVState;
 static int8_t QuestionList[6] = {1, 2, 3, 4, 5, 6};
-static int8_t QuestionYes[6] = {1, -1, 1, 1, 1, -1};
-static int8_t QuestionNo[6] = {-1, 1, -1, -1, -1, 1};
-
+static int8_t QuestionYes[6] = {1, 0, 1, 1, 1, 0};
+static int8_t QuestionNo[6] = {0, 1, 0, 0, 0, 1};
+static uint8_t CurrentQuestion = 0;
 
 bool InitVotingGame(uint8_t Priority) {
     MyPriority = Priority;
@@ -70,7 +72,7 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
         case ChangingQuestion:
             if (ThisEvent.EventType == SWITCH_HIT) {
                 HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) |= MOTOR_OFF;
-                ES_Timer_InitTimer(VOTE_TIMER, 5000);
+                ES_Timer_InitTimer(VOTE_TIMER, FIVE_SEC);
                 CurrentState = Waiting4Vote;
                 puts("New question is displayed. Waiting for user to vote.\r\n");
             }
@@ -84,7 +86,15 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
         case Waiting4Vote:
             if ((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam 
                 == VOTE_TIMER)) {
-                // to be implemented
+                puts("No vote; changing question.\r\n");
+                HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) &= MOTOR_ON; 
+                CurrentQuestion += 1;
+                if (CurrentQuestion>=6)
+                {
+                    CurrentQuestion = 0;
+                }
+                CurrentState = ChangingQuestion;
+                
             }
             else if (ThisEvent.EventType == VOTED_YES) {
                 puts("User voted YES.\r\n");
@@ -94,10 +104,29 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 PostGameManager(Event2Post);
 
                 // evaluate vote
-                
+                ES_Event_t TemperatureEvent;
+                TemperatureEvent.EventType = CHANGE_TEMP;
+                TemperatureEvent.EventParam = QuestionYes[CurrentQuestion];
+                PostGameManager(TemperatureEvent);
+                if(QuestionYes[CurrentQuestion] == 0)
+                {
+                  puts("Wrong answer, increasing temperature by 1 \r \n");
+                  //Post play sad audio to audioservice TBD
+                }
+                else
+                {
+                  puts("Correct answer, decreasing temperature by 1 \r \n");
+                  //Post play happy audio to audioservice TBD
+                }
+              
                 puts("Changing question.\r\n");
                 HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) &= MOTOR_ON;
                 CurrentState = ChangingQuestion;
+                CurrentQuestion += 1;
+                if (CurrentQuestion>=6)
+                {
+                    CurrentQuestion = 0;
+                }
             }
             // else if user voted NO
             else if (ThisEvent.EventType == VOTED_NO) {
@@ -108,10 +137,28 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 PostGameManager(Event2Post);
 
                 // evaluate vote
-                
+                ES_Event_t TemperatureEvent;
+                TemperatureEvent.EventType = CHANGE_TEMP;
+                TemperatureEvent.EventParam = QuestionNo[CurrentQuestion];
+                PostGameManager(TemperatureEvent);
+                if(QuestionNo[CurrentQuestion] == 0)
+                {
+                  puts("Wrong answer, increasing temperature by 1 \r \n");
+                  //Post play sad audio to audioservice
+                }
+                else
+                {
+                  puts("Correct answer, decreasing temperature by 1 \r \n");
+                  //Post play happy audio to audioservice
+                }
                 puts("Changing question.\r\n");
                 HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) &= MOTOR_ON;
                 CurrentState = ChangingQuestion;
+                CurrentQuestion += 1;
+                if (CurrentQuestion>=6)
+                {
+                    CurrentQuestion = 0;
+                }
             }
             break;
     }

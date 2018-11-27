@@ -47,6 +47,7 @@
 #include "SunMovement.h"
 #include "ADMulti.h"
 #include "GameManager.h"
+#include "AudioService.h"
 
 #define ONE_SEC 1000
 #define FIVE_SEC (ONE_SEC*5)
@@ -203,6 +204,9 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         puts("Energy game started \r\n");
         //post event to game service to 
         //1. Play coalplant audio
+        ES_Event_t Event2Post;
+        Event2Post.EventType = PLAY_LOOP;
+        PostAudioService(Event2Post);
         //2. turn on pollution leds
         SR_WritePollution(6);
         //3. turn on energy leds with parameter all
@@ -239,24 +243,27 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         puts("Temp up by 1, too long in coal power state\r\n");
         PostGameManager(TemperatureChange);
         ES_Timer_InitTimer(COAL_ACTIVE_TIMER, FIVE_SEC);
-        //to add in: Play "sad" audio tune
+        //to add in: Play "sad" audio tune TBD
       }
       else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SOLAR_ACTIVE_TIMER))
       {
         //It could be that we changed to new state already whilst this event was still in the queue
-        //Turn 1 temperature LED off
+        //Turn 1 temperature LED off Will we keep this? TBD
         TemperatureChange.EventType = CHANGE_TEMP;
         TemperatureChange.EventParam = 0;
         puts("Temp down by 1, enough solar energy produced\r\n");
         PostGameManager(TemperatureChange);
-        //to add in: Play "happy" audio tune
-        //optional: Have it depend on number of leds that are on (either currently or in the past 10 seconds an average) --> How to??
+        //to add in: Play "happy" audio tune TBD
+
       }
       else if(ThisEvent.EventType == ES_TOWER_PLUGGED)
       {
         puts("Tower plugged, move to SolarPowered state \r\n");
         //post event to do the following:
         //1. Stop coalplant audio
+        ES_Event_t Event2Post;
+        Event2Post.EventType = STOP_LOOP;
+        PostAudioService(Event2Post);
         //2. Turn "low" polution leds
         SR_WritePollution(2);
         //3. Turn "low" energy leds
@@ -267,18 +274,23 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         CurrentEnergyState = SolarPowered;
         ES_Timer_InitTimer(SOLAR_ACTIVE_TIMER, TEN_SEC);
       }
-      else if((ThisEvent.EventType == ES_AUDIO_END) && (ThisEvent.EventParam == COAL_AUDIO))
-      {
-        //1. Play coalplant audio
-      }
+
       else if(ThisEvent.EventType == RESET_ALL_GAMES)
       {
       	//1. Stop playing coalplant audio directly
+        ES_Event_t Event2Post;
+        Event2Post.EventType = STOP_LOOP;
+        PostAudioService(Event2Post);
       	//2. Function to reset sun to original position
       	MoveSunEvent.EventType = ES_MOVE_SUN;
       	MoveSunEvent.EventParam = 1;
       	PostSunMovement(MoveSunEvent);
       	CurrentEnergyState = EnergyStandBy;
+      }
+      
+      else if(ThisEvent.EventType == GAME_OVER)
+      {
+        CurrentEnergyState = EnergyGameOver;
       }
     break;
     }
@@ -290,6 +302,9 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       {
         puts("Tower unplugged, move to CoalPowered state \r\n");
         //1. Play coalplant audio
+        ES_Event_t Event2Post;
+        Event2Post.EventType = PLAY_LOOP;
+        PostAudioService(Event2Post);
         //2. Turn on pollution leds
         SR_WritePollution(6);
         //3. turn on energy leds with parameter all
@@ -305,18 +320,18 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         TemperatureChange.EventParam = 1;
         puts("Temp up by 1, too long in coal power state\r\n");
         PostGameManager(TemperatureChange);
-        //to add in: Play "sad" audio tune
+        //to add in: Play "sad" audio tune TBD
       }
       else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SOLAR_ACTIVE_TIMER))
       {
-        //Turn 1 temperature LED off
+        //Turn 1 temperature LED off. Do we want to keep this? TBD
         TemperatureChange.EventType = CHANGE_TEMP;
         TemperatureChange.EventParam = 0;
         puts("Temp down by 1, enough solar energy produced\r\n");
         PostGameManager(TemperatureChange);
         ES_Timer_InitTimer(SOLAR_ACTIVE_TIMER, TEN_SEC);
-        //to add in: Play "happy" audio tune
-        //optional: Have it depend on number of leds that are on (either currently or in the past 10 seconds an average) --> How to??
+        //to add in: Play "happy" audio tune TBD
+
       }
       else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SUN_POSITION_TIMER))
       {
@@ -352,8 +367,24 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         CurrentEnergyState = EnergyStandBy;
 
       }
+      else if(ThisEvent.EventType == GAME_OVER)
+      {
+        CurrentEnergyState = EnergyGameOver;
+      }
     break;
     }	
+    case EnergyGameOver:
+    {
+        //Blink final score leds for a couple of seconds TBD
+        if(ThisEvent.EventType == RESET_ALL_GAMES)
+        {
+            //Move sun to initial position by calling that service
+            MoveSunEvent.EventType = ES_MOVE_SUN;
+            MoveSunEvent.EventParam = 0;
+            PostSunMovement(MoveSunEvent);
+            CurrentEnergyState = EnergyStandBy;
+      }
+    }
   }
   return ReturnEvent;
 }
@@ -389,8 +420,7 @@ bool CheckSolarPanelPosition(void)
   //Get CurrentSolarPanelVoltage from input line
   CurrentSolarPanelVoltage = ReadSolarPanelPosition();
   
-  //Analog signal, to be changed accordingly
-  //If the state of the Morse input line has changed
+
   if(abs(CurrentSolarPanelVoltage-LastSolarPanelVoltage) >= V_threshold)
   {
     puts("Solarpanel position changed by threshold \r\n");
@@ -569,7 +599,7 @@ static uint8_t EvaluateSolarAlignment(void)
 static bool ReadSmokeTowerIR(void)
 {
   bool SmokeTowerIRState;
-  //Read digital input pin (as in Morselements)
+  //Read digital input pin 
   SmokeTowerIRState = HWREG(GPIO_PORT_EP + (GPIO_O_DATA + ALL_BITS)) & TOWER_HI;
   return SmokeTowerIRState;
 }

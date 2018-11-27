@@ -13,7 +13,7 @@ based on the Gen 2 Events and Service Framework
 #include "ES_Events.h"
 
 //TypeDefs  for the states
-typedef enum {InitEnergyGame, EnergyStandBy, CoalPowered, SolarPowered} EnergyGameState;
+typedef enum {InitEnergyGame, EnergyStandBy, CoalPowered, SolarPowered, EnergyGameOver} EnergyGameState;
 
 //Public Function Prototypes
 bool InitEnergyProduction(uint8_t Priority);

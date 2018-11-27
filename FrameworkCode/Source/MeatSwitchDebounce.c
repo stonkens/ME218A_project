@@ -167,12 +167,18 @@ ES_Event_t RunMeatSwitchDebounceSM(ES_Event_t ThisEvent)
       if((ThisEvent.EventType == START_GAME) && (ThisEvent.EventParam == 2))
       {
         puts("Meat game started \r\n");
+        MeatPieces = 0;
         GameStatus = MeatActive;
         CurrentButtonState = Ready2Sample;
       }
     }
     case(MeatActive):
     {
+      if(ThisEvent.EventType == RESET_ALL_GAMES)
+      {
+        //No events triggered at the end of the game
+        GameStatus = MeatStandBy;
+      }
       switch(CurrentButtonState)
       {
         case Debouncing:
