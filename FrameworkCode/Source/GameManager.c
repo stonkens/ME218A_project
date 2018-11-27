@@ -5,10 +5,12 @@
 *
 ****************************************************************************************/
 // PORT D
-#define TEMP_LED_NUM 8
+#define MAX_TEMP 8
 
 #include "GameManager.h"
 #include "ES_Framework.h"
+#include "ADMulti.h"
+#include "ES_ShortTimer.h"
 
 // the headers to access the GPIO subsystem
 #include "inc/hw_memmap.h"
@@ -21,8 +23,6 @@
 #include "EnergyProduction.h"
 #include "ShiftRegisterWrite.h"
 #include "MeatSwitchDebounce.h"
-#include "ADMulti.h"
-
 #include "AudioService.h"
 
 #define ONE_SEC 1000
@@ -44,20 +44,34 @@
 #define REF_STATE2_HI_AD AD_VOLTAGE(REF_STATE2_HI) 
 #define REF_STATE3_LO_AD AD_VOLTAGE(REF_STATE3_LO)
 
+#define INSERT 1
+#define REMOVE 2
+#define BLINK_TIME 500
+
+#define LEAF_LED_BASE GPIO_PORTC_BASE
+#define LEAF_LED_TOP BIT4LO
+#define LEAF_LED_MID BIT5LO
+#define LEAF_LED_BOT BIT6LO
+
+
 /****************************** Private Functions & Variables **************************/
 static uint8_t LEAFLastState;
 static uint8_t MyPriority;
 static GameManagerState CurrentState = InitGState;
 
-static uint32_t ReadLEAFState(void);
+static uint32_t ReadLEAFState();
+static void BlinkNextLED();
+static uint8_t BlinkLEAFLights = 0;
 
 bool InitGameManager(uint8_t Priority) {
-    // ports initialized in ADCMultiInit
+    // LEAF IR detector port initialized in ADCMultiInit
+    HWREG(LEAF_LED_BASE + GPIO_O_DEN) |= ~(LEAF_LED_TOP & LEAF_LED_MID & LEAF_LED_BOT);
+    HWREG(LEAF_LED_BASE + GPIO_O_DIR) |= ~(LEAF_LED_TOP & LEAF_LED_MID & LEAF_LED_BOT);
     SR_Init();
-  
+    MyPriority = Priority;
+    ES_ShortTimerInit(MyPriority, SHORT_TIMER_UNUSED);
     ES_Event_t InitEvent;
     InitEvent.EventType = ES_INIT;
-  
     if (ES_PostToService(MyPriority, InitEvent) == true) {
         return true;
     }
@@ -70,7 +84,7 @@ bool PostGameManager(ES_Event_t ThisEvent) {
 
 ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
-    static int8_t Temperature = TEMP_LED_NUM;
+    static int8_t Temperature = MAX_TEMP - 1;
     static uint8_t NumOfActiveGames = 0;
     
     ES_Event_t ReturnEvent;
@@ -82,7 +96,10 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 puts("GameManager in standby mode.\r\n");
                 LEAFLastState = 1; //Corresponds to no LEAF
                 CurrentState = Standby;
-                // Change EventType to light leds indicating direction to insert
+                // light leds indicating direction to insert
+                BlinkLEAFLights = INSERT;
+                BlinkNextLED();
+                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
             }
             else 
                 puts("Error: did not receive ES_INIT event.\r\n");
@@ -93,30 +110,38 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
             if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 2)) 
             {
                 puts("Reflectivity too high, LEAF inserted incorrectly.\r\n");
-                ES_Event_t Event2Post;
-                //Change EventType to light leds indicating direction
-                // Event2Post.EventType = PLAY_LEAF_ERROR_AUDIO;
-                // PostAudioService(Event2Post);
+                BlinkLEAFLights = REMOVE;
+                BlinkNextLED();
+                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
+            }
             }
             else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 1)) 
             {
                 puts("No leaf inserted. Please insert leaf\r\n");
-                ES_Event_t Event2Post;
-                // Change EventType to light leds indicating direction to insert
+                BlinkLEAFLights = INSERT;
+                BlinkNextLED();
+                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
+            }
                 
             }
             else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 3))  
             {
+                BlinkLEAFLights = 0;
                 // play welcoming audio
                 ES_Event_t Event2Post;
                 Event2Post.EventType = PLAY_AUDIO;
                 Event2Post.EventParam = WELCOMING_TRACK;
                 printf("Posting audio event, param: %d\r\n", Event2Post.EventParam);
                 PostAudioService(Event2Post);
-                // turn on thermometer LEDs (start at 6/7 not at all 8 on, as we can also go up)
+                // turn on thermometer LEDs (starting at 7)
                 SR_WriteTemperature(Temperature);
                 puts("LEAF inserted correctly. Going into welcome mode.\r\n");
                 CurrentState = WelcomeMode;                
+            }
+            else if ((ThisEvent.EventType == ES_SHORT_TIMEOUT) && (ThisEvent.EventParam == TIMER_A) 
+                && BlinkLEAFLights) {
+                BlinkNextLED();
+                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
             }
             break;
 
@@ -143,6 +168,11 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 ES_Event_t Event2Post;
                 Event2Post.EventType = STOP_AUDIO;
                 PostAudioService(Event2Post);
+
+                BlinkLEAFLights = INSERT;
+                BlinkNextLED();
+                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
+
                 CurrentState = Standby;
                 puts("LEAF removed; going back to standby.\r\n");
             }
@@ -173,13 +203,16 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
             else if ((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
                 USER_INPUT_TIMER)) {
-                puts("No user input detected for 30s, Resetting all games.\r\n");
-                SR_Write(0); // SR_WriteTemperature(0);
+                puts("No user input detected for 30s; Resetting all games.\r\n");
+                SR_Write(0);
                 ES_Event_t Event2Post;
                 Event2Post.EventType = RESET_ALL_GAMES;
                 // post event to distribution list
-                // ES_PostList00(Event2Post);
-                // Change EventType to light leds indicating direction to take out
+                ES_PostList00(Event2Post);
+                
+                BlinkLEAFLights = REMOVE;
+                BlinkNextLED();
+                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
                 CurrentState = Standby;
             }
 
@@ -191,7 +224,9 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 Event2Post.EventType = RESET_ALL_GAMES;
                 // post event to distribution list
                 ES_PostList00(Event2Post);
-                // Change EventType to light leds indicating direction to put in
+                BlinkLEAFLights = INSERT;
+                BlinkNextLED();
+                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
                 CurrentState = Standby;
             }
 
@@ -201,15 +236,11 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
             }
 
             else if (ThisEvent.EventType == CHANGE_TEMP) {
-                Temperature += 2*ThisEvent.EventParam - 1;
-                if (Temperature>TEMP_LED_NUM)
-                {
-                    Temperature = TEMP_LED_NUM;
-                }
+                Temperature += 2 * ThisEvent.EventParam - 1;
+                if (Temperature > MAX_TEMP)
+                    Temperature = MAX_TEMP;
                 else if (Temperature < 0)
-                {
-                    Temperature = 0;
-                }              
+                    Temperature = 0;            
                 SR_WriteTemperature(Temperature);
             }
 
@@ -221,7 +252,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 Event2Post.EventType = PLAY_CLOSING_AUDIO;
                 Event2Post.EventParam = Temperature;
                 PostAudioService(Event2Post);
-                // stamp LEAF 
+                // stamp LEAF TBD
                 CurrentState = GameOver;
             }
             break;
@@ -229,7 +260,15 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
         case GameOver:
             if ((ThisEvent.EventType == AUDIO_DONE) && (ThisEvent.EventParam == CLOSING_TRACK)) {
                 puts("Closing track done. \r\n");
-                // light up LEDs to indicate user to remove LEAF            
+                // light up LEDs to indicate user to remove LEAF
+                BlinkLEAFLights = REMOVE;
+                BlinkNextLED();
+                ES_ShortTimerStart(TIMER_A, BLINK_TIME);            
+            }
+            else if ((ThisEvent.EventType == ES_SHORT_TIMEOUT) && (ThisEvent.EventParam == TIMER_A) 
+                && BlinkLEAFLights) {
+                BlinkNextLED();
+                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
             }
             else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 1)) {
                 puts("LEAF removed. Resetting all games and going back to standby.");
@@ -237,6 +276,11 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 ES_Event_t Event2Post;
                 Event2Post.EventType = RESET_ALL_GAMES;
                 ES_PostList00(Event2Post);
+
+                BlinkLEAFLights = INSERT;
+                BlinkNextLED();
+                ES_ShortTimerStart(TIMER_A, BLINK_TIME);
+
                 CurrentState = Standby;
             }
 
@@ -296,7 +340,7 @@ bool CheckLEAFInsertion()
  Author
     Sander Tonkens, 11/1/18, 10:32
 ****************************************************************************/
-static uint32_t ReadLEAFState(void)
+static uint32_t ReadLEAFState()
 {
   uint32_t LEAF_Position[2];
   //Read analog input pin 
@@ -304,4 +348,22 @@ static uint32_t ReadLEAFState(void)
   //printf("LEAF position: %d \r\n", LEAF_Position[1]);
   //Leaf position corresponds to PE1 (2nd ADC channel)
   return LEAF_Position[1];
+}
+
+static void BlinkNextLED() {
+    static uint8_t i = 0;
+    uint8_t LEDSequence[3] = {LEAF_LED_TOP, LEAF_LED_MID, LEAF_LED_BOT};
+    if (Direction == REMOVE) {
+        LEDSequence[0] = LEAF_LED_BOT;
+        LEDSequence[2] = LEAF_LED_TOP;
+    }
+    if (i == 3) {
+        // turn off all LEDs
+        HWREG(LEAF_PORT_BASE + GPIO_O_DATA + ALL_BITS) |= ~(LEAF_LED_BOT & LEAF_LED_MID & LEAF_LED_TOP);
+        i = 0;
+    }
+    else {
+        HWREG(LEAF_PORT_BASE + GPIO_O_DATA + ALL_BITS) &= LEDSequence[i];
+        i++;
+    }
 }
