@@ -22,6 +22,9 @@
 static uint8_t MyPriority;
 
 static VotingGameState CurrentState = InitVState;
+static int8_t QuestionList[6] = {1, 2, 3, 4, 5, 6};
+static int8_t QuestionYes[6] = {1, -1, 1, 1, 1, -1};
+static int8_t QuestionNo[6] = {-1, 1, -1, -1, -1, 1};
 
 
 bool InitVotingGame(uint8_t Priority) {

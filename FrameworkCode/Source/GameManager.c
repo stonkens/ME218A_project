@@ -25,6 +25,12 @@
 
 #include "AudioService.h"
 
+#define ONE_SEC 1000
+
+#define TEN_SEC (ONE_SEC*10)
+#define ONE_MINUTE (ONE_SEC*60)
+#define HALF_MINUTE (ONE_SEC*30)
+
 #define AD_VOLTAGE(x) (int)(x*4095/3.3)
 
 #define REF_STATE1_HI 1.0
@@ -46,16 +52,8 @@ static GameManagerState CurrentState = InitGState;
 static uint32_t ReadLEAFState(void);
 
 bool InitGameManager(uint8_t Priority) {
-    // initialize ports (already set to input by default)
     // ports initialized in ADCMultiInit
-    // HWREG(GPIO_PORTD_BASE + GPIO_O_DEN) |= LEAF_DETECTOR_PORT;
-    // LEAFSwitchLastState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + ALL_BITS) & 
-    //    LEAF_DETECTOR_PORT;
     SR_Init();
-    printf("REF_STATE1_HI_AD = %d\r\n", REF_STATE1_HI_AD);
-    printf("REF_STATE2_LO_AD = %d\r\n", REF_STATE2_LO_AD);
-    printf("REF_STATE2_HI_AD = %d\r\n", REF_STATE2_HI_AD);
-    printf("REF_STATE3_LO_AD = %d\r\n", REF_STATE3_LO_AD);
   
     ES_Event_t InitEvent;
     InitEvent.EventType = ES_INIT;
@@ -72,7 +70,7 @@ bool PostGameManager(ES_Event_t ThisEvent) {
 
 ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
-    static uint8_t Temperature = TEMP_LED_NUM;
+    static int8_t Temperature = TEMP_LED_NUM;
     static uint8_t NumOfActiveGames = 0;
     
     ES_Event_t ReturnEvent;
@@ -115,7 +113,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 Event2Post.EventParam = WELCOMING_TRACK;
                 printf("Posting audio event, param: %d\r\n", Event2Post.EventParam);
                 PostAudioService(Event2Post);
-                // turn on thermometer LEDs
+                // turn on thermometer LEDs (start at 6/7 not at all 8 on, as we can also go up)
                 SR_WriteTemperature(Temperature);
                 puts("LEAF inserted correctly. Going into welcome mode.\r\n");
                 CurrentState = WelcomeMode;                
@@ -129,13 +127,14 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 Event2Post.EventType = START_GAME;
                 Event2Post.EventParam = 1;
                 PostEnergyProduction(Event2Post);
+                // play audio instructions for game 1?
                 NumOfActiveGames ++;
                 puts("Starting first game.\r\n");
 
                 // start timers
-                ES_Timer_InitTimer(NEXT_GAME_TIMER, 10000);
-                ES_Timer_InitTimer(USER_INPUT_TIMER, 30000);
-                ES_Timer_InitTimer(GAME_END_TIMER, 60000);
+                ES_Timer_InitTimer(NEXT_GAME_TIMER, TEN_SEC);
+                ES_Timer_InitTimer(USER_INPUT_TIMER, HALF_MINUTE);
+                ES_Timer_InitTimer(GAME_END_TIMER, ONE_MINUTE);
                 CurrentState = GameActive;
             }
             else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 1)) {
@@ -157,7 +156,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                     ES_Event_t Event2Post;
                     Event2Post.EventType = START_GAME;
                     if (NumOfActiveGames == 2) {
-                        ES_Timer_InitTimer(NEXT_GAME_TIMER, 10000);
+                        ES_Timer_InitTimer(NEXT_GAME_TIMER, TEN_SEC);
                         Event2Post.EventParam = 2;
                         PostMeatSwitchDebounce(Event2Post);
                         // play audio instructions for game 2?
@@ -174,8 +173,6 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
             else if ((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
                 USER_INPUT_TIMER)) {
-            /* else if (((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
-                USER_INPUT_TIMER))) { */
                 puts("No user input detected for 30s, Resetting all games.\r\n");
                 SR_Write(0); // SR_WriteTemperature(0);
                 ES_Event_t Event2Post;
@@ -199,12 +196,20 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
             }
 
             else if (ThisEvent.EventType == USERMVT_DETECTED) {
-                ES_Timer_InitTimer(USER_INPUT_TIMER, 30000);
+                ES_Timer_InitTimer(USER_INPUT_TIMER, HALF_MINUTE);
                 puts("Resetting 30s timer.\r\n");
             }
 
             else if (ThisEvent.EventType == CHANGE_TEMP) {
-                Temperature += ThisEvent.EventParam;
+                Temperature += 2*ThisEvent.EventParam - 1;
+                if (Temperature>TEMP_LED_NUM)
+                {
+                    Temperature = TEMP_LED_NUM;
+                }
+                else if (Temperature < 0)
+                {
+                    Temperature = 0;
+                }              
                 SR_WriteTemperature(Temperature);
             }
 
@@ -216,7 +221,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 Event2Post.EventType = PLAY_CLOSING_AUDIO;
                 Event2Post.EventParam = Temperature;
                 PostAudioService(Event2Post);
-                // stamp LEAF
+                // stamp LEAF 
                 CurrentState = GameOver;
             }
             break;
@@ -226,7 +231,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 puts("Closing track done. \r\n");
                 // light up LEDs to indicate user to remove LEAF            
             }
-            else if ((ThisEvent.EventType == LEAF_REMOVED) && (ThisEvent.EventParam == 1)) {
+            else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 1)) {
                 puts("LEAF removed. Resetting all games and going back to standby.");
                 SR_Write(0);
                 ES_Event_t Event2Post;
@@ -241,24 +246,6 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
     return ReturnEvent;
 }
 
-// void CheckLEAFSwitch() {
-//     uint8_t LEAFSwitchCurrentState = HWREG(GPIO_PORTB_BASE + GPIO_O_DATA + 
-//         ALL_BITS) & LEAF_SWITCH_PORT;
-//     if (LEAFSwitchCurrentState != LEAFSwitchLastState) {
-//         ES_Event_t Event2Post;
-//         // input is pulled HI when the switch is open
-//         if (LEAFSwitchCurrentState)
-//             Event2Post.EventType = LEAF_SWITCH_OPEN;
-//         else
-//             Event2Post.EventType = LEAF_SWITCH_CLOSED;
-//         ES_PostToService(MyPriority, Event2Post);
-//         LEAFSwitchLastState = LEAFSwitchCurrentState;
-//     }
-// }
-
-//To be changed by Sander
-//3 events: LEAF_CORRECT, LEAF_WRONG, LEAF_REMOVED
-//4 thresholds V_lowmed_lo, V_lowmed_hi, V_medhi_lo, V_medhi_hi
 bool CheckLEAFInsertion() 
 {
     ES_Event_t LeafEvent;

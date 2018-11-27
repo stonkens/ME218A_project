@@ -246,7 +246,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         //It could be that we changed to new state already whilst this event was still in the queue
         //Turn 1 temperature LED off
         TemperatureChange.EventType = CHANGE_TEMP;
-        TemperatureChange.EventParam = -1;
+        TemperatureChange.EventParam = 0;
         puts("Temp down by 1, enough solar energy produced\r\n");
         PostGameManager(TemperatureChange);
         //to add in: Play "happy" audio tune
@@ -311,7 +311,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       {
         //Turn 1 temperature LED off
         TemperatureChange.EventType = CHANGE_TEMP;
-        TemperatureChange.EventParam = -1;
+        TemperatureChange.EventParam = 0;
         puts("Temp down by 1, enough solar energy produced\r\n");
         PostGameManager(TemperatureChange);
         ES_Timer_InitTimer(SOLAR_ACTIVE_TIMER, TEN_SEC);
