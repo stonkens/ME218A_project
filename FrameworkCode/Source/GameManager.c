@@ -22,15 +22,16 @@
 #include "EnergyProduction.h"
 #include "ShiftRegisterWrite.h"
 #include "MeatSwitchDebounce.h"
+#include "ADMulti.h"
 
 #include "AudioService.h"
 
-#define AD_VOLTAGE(x) (int(x*4095/3.3))
+#define AD_VOLTAGE(x) (int)(x*4095/3.3)
 
 #define REF_STATE1_HI 1.0
-#define REF_STATE2_LO 1.8
-#define REF_STATE2_HI 2.3
-#define REF_STATE3_LO 2.8
+#define REF_STATE2_LO 1.5
+#define REF_STATE2_HI 2.0
+#define REF_STATE3_LO 2.5
 
 
 #define REF_STATE1_HI_AD AD_VOLTAGE(REF_STATE1_HI) 
@@ -52,8 +53,14 @@ bool InitGameManager(uint8_t Priority) {
     // LEAFSwitchLastState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + ALL_BITS) & 
     //    LEAF_DETECTOR_PORT;
     SR_Init();
+    printf("REF_STATE1_HI_AD = %d", REF_STATE1_HI_AD);
+    printf("REF_STATE2_LO_AD = %d", REF_STATE2_LO_AD);
+    printf("REF_STATE2_HI_AD = %d", REF_STATE2_HI_AD);
+    printf("REF_STATE3_LO_AD = %d", REF_STATE3_LO_AD);
+  
     ES_Event_t InitEvent;
     InitEvent.EventType = ES_INIT;
+  
     if (ES_PostToService(MyPriority, InitEvent) == true) {
         return true;
     }
@@ -237,15 +244,15 @@ bool CheckLEAFInsertion()
 
     LEAFCurrentValue = ReadLEAFState();
 
-    if(LEAFCurrentValue < REF_STATE1_HI)
+    if(LEAFCurrentValue < REF_STATE1_HI_AD)
     {
         LEAFCurrentState = 1;
     }
-    else if((LEAFCurrentValue > REF_STATE2_LO) && (LEAFCurrentValue < REF_STATE2_HI))
+    else if((LEAFCurrentValue > REF_STATE2_LO_AD) && (LEAFCurrentValue < REF_STATE2_HI_AD))
     {
         LEAFCurrentState = 2;
     }
-    else if(LEAFCurrentValue > REF_STATE3_LO)
+    else if(LEAFCurrentValue > REF_STATE3_LO_AD)
     {
         LEAFCurrentState = 3;
     }
@@ -254,6 +261,7 @@ bool CheckLEAFInsertion()
         ReturnVal = true;
         LeafEvent.EventType = LEAF_CHANGED;
         LeafEvent.EventParam = LEAFCurrentState;
+        printf("Leaf changed, state = %d", LEAFCurrentState); 
         PostGameManager(LeafEvent);
         LEAFLastState = LEAFCurrentState;
     }

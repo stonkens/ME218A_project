@@ -263,9 +263,7 @@ typedef enum
   ES_SHORT_TIMEOUT,         /* signals that a short timer has expired */
 
   /* User-defined events start here */
-  LEAF_REMOVED,
-  LEAF_IN_CORRECT,
-  LEAF_IN_INCORRECT,
+  LEAF_CHANGED,
   PLAY_AUDIO,
   AUDIO_DONE,
   STOP_AUDIO,
@@ -322,7 +320,7 @@ typedef enum
 
 /****************************************************************************/
 // This is the list of event checking functions
-#define EVENT_CHECK_LIST CheckLEAFInsertion, CheckButtonPress, Check4Keystroke, CheckMeatSwitchEvents, CheckSolarPanelPosition, CheckSmokeTowerEvents
+#define EVENT_CHECK_LIST CheckLEAFInsertion, CheckButtonPress, Check4Keystroke, CheckMeatSwitchEvents, CheckSolarPanelPosition, CheckSmokeTowerEvents, CheckLEAFInsertion
 /****************************************************************************/
 // These are the definitions for the post functions to be executed when the
 // corresponding timer expires. All 16 must be defined. If you are not using

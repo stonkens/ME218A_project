@@ -112,17 +112,20 @@ bool Check4Keystroke(void)
     uint8_t Key = GetNewKey();
     if (Key == 'i')
     {
-      ThisEvent.EventType = LEAF_IN_INCORRECT;
+      ThisEvent.EventType = LEAF_CHANGED;
+      ThisEvent.EventParam = 2;
       PostGameManager(ThisEvent);
     }
     else if (Key == 'c')
     {
-      ThisEvent.EventType = LEAF_IN_CORRECT;
+      ThisEvent.EventType = LEAF_CHANGED;
+      ThisEvent.EventParam = 3;
       PostGameManager(ThisEvent);
     }
     else if (Key == 'r')
     {
-      ThisEvent.EventType = LEAF_REMOVED;
+      ThisEvent.EventType = LEAF_CHANGED;
+      ThisEvent.EventParam = 1;
       PostGameManager(ThisEvent);
     }
     else if (Key == 'a')
