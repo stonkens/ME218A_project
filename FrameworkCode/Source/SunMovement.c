@@ -43,7 +43,7 @@
 */
 #include "PWM16Tiva.h"
 
-#define PULSEWIDTH 25000
+#define PERIOD 20000
 #define SERVO_CHANNEL 0
 #define MAX_RANGE 130
 #define NO_OF_INCREMENTS 12

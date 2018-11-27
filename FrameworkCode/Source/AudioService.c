@@ -73,11 +73,13 @@ ES_Event_t RunAudioService(ES_Event_t ThisEvent) {
             break;
 
         case NoAudio:
+            puts("waiting for audio instructions\r\n");
             if (ThisEvent.EventType == PLAY_AUDIO) {
                 CurrentTrack = ThisEvent.EventParam;
                 HWREG(PORT_BASE + GPIO_O_DATA + ALL_BITS) &= TrackPorts[CurrentTrack];
                 // audio board has built-in debounce so trigger has to be pulled 
                 // LO for a certain amount of time
+                printf("Playing audio track %d\r\n", CurrentTrack);
                 ES_Timer_InitTimer(AUDIO_DEBOUNCE_TIMER, DEBOUNCE_TIME);
                 CurrentState = PlayingAudio;
             }
@@ -130,8 +132,10 @@ ES_Event_t RunAudioService(ES_Event_t ThisEvent) {
 
 bool CheckAudioStatus() {
     bool ReturnValue = false;
-    uint8_t ActivityPinCurrState = HWREG(GPIO_PORTF_BASE + GPIO_O_DEN) & ~ACTIVITY_PIN;
+    uint8_t ActivityPinCurrState = HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) & ~ACTIVITY_PIN;
+    // printf("acitivity pin curr state: %d\r\n", ActivityPinCurrState);
     if (ActivityPinCurrState != ActivityPinLastState) {
+        puts("act pin changed.\r\n");
         if (ActivityPinCurrState) {
             // activity pin HI means track is done playing
             ES_Event_t Event2Post;
@@ -140,6 +144,7 @@ bool CheckAudioStatus() {
             PostAudioService(Event2Post);
             PostGameManager(Event2Post);
             ReturnValue = true;
+            puts("posting AUDIO DONE event.\r\n");
         }
         ActivityPinLastState = ActivityPinCurrState;
     }

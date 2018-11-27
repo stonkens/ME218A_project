@@ -22,5 +22,6 @@
 #include "VotingGame.h"
 #include "MeatSwitchDebounce.h"
 #include "EnergyProduction.h"
+#include "AudioService.h"
 
 #endif  // ES_EventCheckWrapper_H

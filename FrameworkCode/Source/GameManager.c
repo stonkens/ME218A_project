@@ -5,7 +5,6 @@
 *
 ****************************************************************************************/
 // PORT D
-#define LEAF_DETECTOR_PORT BIT6HI
 #define TEMP_LED_NUM 8
 
 #include "GameManager.h"
@@ -114,6 +113,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 ES_Event_t Event2Post;
                 Event2Post.EventType = PLAY_AUDIO;
                 Event2Post.EventParam = WELCOMING_TRACK;
+                printf("Posting audio event, param: %d\r\n", Event2Post.EventParam);
                 PostAudioService(Event2Post);
                 // turn on thermometer LEDs
                 SR_WriteTemperature(Temperature);

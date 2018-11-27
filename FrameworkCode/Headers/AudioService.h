@@ -8,8 +8,8 @@
 #ifndef AUDIO_SERVICE_H
 #define AUDIO_SERVICE_H
 
-#define WELCOMING_TRACK 0
-#define COAL_AUDIO 1
+#define WELCOMING_TRACK 1
+#define COAL_AUDIO 2
 
 #include "ES_Events.h"
 #include "ES_Types.h"

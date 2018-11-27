@@ -320,7 +320,7 @@ typedef enum
 
 /****************************************************************************/
 // This is the list of event checking functions
-#define EVENT_CHECK_LIST CheckLEAFInsertion, CheckButtonPress, Check4Keystroke, CheckMeatSwitchEvents, CheckSolarPanelPosition, CheckSmokeTowerEvents, CheckLEAFInsertion
+#define EVENT_CHECK_LIST CheckLEAFInsertion, CheckButtonPress, Check4Keystroke, CheckMeatSwitchEvents, CheckSolarPanelPosition, CheckSmokeTowerEvents, CheckLEAFInsertion, CheckAudioStatus
 /****************************************************************************/
 // These are the definitions for the post functions to be executed when the
 // corresponding timer expires. All 16 must be defined. If you are not using
