@@ -41,12 +41,14 @@
 
 /* include header files for the other modules that are referenced
 */
+#include "PWM16Tiva.h"
 
-// Private functions
-
+#define PULSEWIDTH 25000
+#define SERVO_CHANNEL 0
+#define MAX_RANGE 130
+#define NO_OF_INCREMENTS 12
 
 // module level defines
-static uint8_t sun_position = 0;
 static uint8_t MyPriority;
 
 /****************************************************************************
@@ -72,9 +74,9 @@ bool InitSunMovement(uint8_t Priority)
   
   MyPriority = Priority;
   //Define PWM TIVA output to sun as PWM output
-
-  return true;
-
+  ES_Event_t InitEvent;
+  InitEvent.EventType = ES_INIT;
+  return ES_PostToService(MyPriority, InitEvent);
 }
 
 /****************************************************************************
@@ -119,25 +121,37 @@ Parameters
 
 ES_Event_t RunSunMovement(ES_Event_t ThisEvent)
 {
+  // Default return event
   ES_Event_t ReturnEvent;
-  //Default return event
   ReturnEvent.EventType = ES_NO_EVENT;
 
-  
+  static uint8_t SunPosition = (1000/180)*(180 - MAX_RANGE)/2;
 
-  if(ThisEvent.EventType == ES_MOVE_SUN)
+  if (ThisEvent.EventType == ES_INIT) {
+    PWM_TIVA_SetPulseWidth((1000 + SunPosition)/0.8, SERVO_CHANNEL);
+  }
+  else if (ThisEvent.EventType == ES_MOVE_SUN)
   {
-    if(ThisEvent.EventParam == 0) //Move every 5 seconds
+    if (ThisEvent.EventParam == 0) // Move every 5 seconds
     {
-      //Move sun by 1/12th of a day //Connie
-      //Update value of sun position
+      // Move sun by 1/12th of a day
+      PWM_TIVA_SetPeriod(PERIOD, SERVO_CHANNEL);
+      SunPosition += (1000/180)*(MAX_RANGE/NO_OF_INCREMENTS);
+      if (SunPosition > (1000 * MAX_RANGE/180)) {
+        ReturnEvent.EventParam = ES_ERROR;
+        puts("Error: sun position attempting to exceed max range.\r\n");
+        return ReturnEvent;
+      }
+      printf("SunPosition in us is: %d\r\n", SunPosition);
+      PWM_TIVA_SetPulseWidth((1000 + SunPosition)/0.8, SERVO_CHANNEL);
     }
-    else if(ThisEvent.EventParam == 1) //Reset all games
+    else if (ThisEvent.EventParam == 1) //Reset all games
     {
-      //Return sun to its initial position //Connie
-      //Use current sun position value as the
+      // Return sun to its initial position
+      SunPosition = (1000/180)*(180 - MAX_RANGE)/2;
+      PWM_TIVA_SetPulseWidth((1000 + SunPosition)/0.8, SERVO_CHANNEL);
+      puts("Sun reset to initial position.\r\n");
     }
   }
   return ReturnEvent;
- 
 }

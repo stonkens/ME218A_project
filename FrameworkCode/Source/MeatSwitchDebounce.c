@@ -65,7 +65,7 @@ static MeatSwitchDebounceState CurrentButtonState;
 static MeatGameState GameStatus;
 
 // module level defines
-static uint8_t DebounceTime=250;
+static uint8_t DebounceTime = 250;
 
 /****************************************************************************
  Function
