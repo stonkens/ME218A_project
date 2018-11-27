@@ -75,7 +75,7 @@ int main(void)
   HWREG(SYSCTL_RCGCGPIO) |= BIT1HI; // Port B
   while (!(HWREG(SYSCTL_PRGPIO) & BIT1HI));
   ADC_MultiInit(2); //to be placed in main.c
-  PWM_TIVA_Init(3); //3 servos: PB6=0, PB7=1, PB4=2
+  PWM_TIVA_Init(2); //2 servos: PB6=0, PB7=1
   //PWM_TIVA_SetPeriod( 25000, 1); //To be placed in servo module
   //PWM_TIVA_SetPulseWidth(1875,2); //To be placed in servo module
   // now initialize the Events and Services Framework and start it running

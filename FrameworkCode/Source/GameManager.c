@@ -103,7 +103,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
             }
             else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 1)) 
             {
-                puts("Reflectivity too high, LEAF inserted incorrectly.\r\n");
+                puts("No leaf inserted. Please insert leaf\r\n");
                 ES_Event_t Event2Post;
                 // Change EventType to light leds indicating direction to insert
                 
@@ -242,8 +242,7 @@ bool CheckLEAFInsertion()
     uint32_t LEAFCurrentValue;
     static uint8_t LEAFCurrentState;
 
-    LEAFCurrentValue = ReadLEAFState();
-
+    LEAFCurrentValue = ReadLEAFState();                                                                                                                                            
     if(LEAFCurrentValue < REF_STATE1_HI_AD)
     {
         LEAFCurrentState = 1;

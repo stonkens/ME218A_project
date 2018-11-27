@@ -78,10 +78,10 @@ static uint8_t EvaluateSolarAlignment(void);
 // module level defines
 static uint8_t MyPriority;
 static EnergyGameState CurrentEnergyState;
-static uint16_t LastSolarPanelVoltage;
+static uint32_t LastSolarPanelVoltage;
 static bool LastSmokeTowerState;
 static uint32_t V_sun = 2000;
-static uint32_t V_threshold = 200;
+static uint32_t V_threshold = 500;
 
 
 
