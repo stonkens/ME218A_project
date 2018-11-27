@@ -52,10 +52,10 @@ bool InitGameManager(uint8_t Priority) {
     // LEAFSwitchLastState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + ALL_BITS) & 
     //    LEAF_DETECTOR_PORT;
     SR_Init();
-    printf("REF_STATE1_HI_AD = %d", REF_STATE1_HI_AD);
-    printf("REF_STATE2_LO_AD = %d", REF_STATE2_LO_AD);
-    printf("REF_STATE2_HI_AD = %d", REF_STATE2_HI_AD);
-    printf("REF_STATE3_LO_AD = %d", REF_STATE3_LO_AD);
+    printf("REF_STATE1_HI_AD = %d\r\n", REF_STATE1_HI_AD);
+    printf("REF_STATE2_LO_AD = %d\r\n", REF_STATE2_LO_AD);
+    printf("REF_STATE2_HI_AD = %d\r\n", REF_STATE2_HI_AD);
+    printf("REF_STATE3_LO_AD = %d\r\n", REF_STATE3_LO_AD);
   
     ES_Event_t InitEvent;
     InitEvent.EventType = ES_INIT;
@@ -139,14 +139,11 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 CurrentState = GameActive;
             }
             else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 1)) {
-                
-                // maybe add turn off all LED function to SR? --> Adds
+                // turn all lights off
                 SR_Write(0);
-                // SR_WriteTemperature(0);
-
                 ES_Event_t Event2Post;
-                // Event2Post.EventType = STOP_WELCOMING_AUDIO;
-                // PostAudioService(Event2Post);
+                Event2Post.EventType = STOP_AUDIO;
+                PostAudioService(Event2Post);
                 CurrentState = Standby;
                 puts("LEAF removed; going back to standby.\r\n");
             }
@@ -163,23 +160,24 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                         ES_Timer_InitTimer(NEXT_GAME_TIMER, 10000);
                         Event2Post.EventParam = 2;
                         PostMeatSwitchDebounce(Event2Post);
+                        // play audio instructions for game 2?
                         puts("10s timer expired: starting second game.\r\n");
                     }
                     else if (NumOfActiveGames == 3) {
                         Event2Post.EventParam = 3;
                         PostVotingGame(Event2Post);
+                        // play audio instructions for game 3?
                         puts("10s timer expired: starting third game.\r\n");
                     }
                 }
             }
 
             else if ((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
-                USER_INPUT_TIMER))  
-            {
+                USER_INPUT_TIMER)) {
             /* else if (((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
                 USER_INPUT_TIMER))) { */
                 puts("No user input detected for 30s, Resetting all games.\r\n");
-                SR_WriteTemperature(0);
+                SR_Write(0); // SR_WriteTemperature(0);
                 ES_Event_t Event2Post;
                 Event2Post.EventType = RESET_ALL_GAMES;
                 // post event to distribution list
@@ -191,29 +189,55 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
             else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 1))
             {
                 puts("User removed leaf, Resetting all games.\r\n");
-                SR_WriteTemperature(0);
+                SR_Write(0);// SR_WriteTemperature(0);
                 ES_Event_t Event2Post;
                 Event2Post.EventType = RESET_ALL_GAMES;
                 // post event to distribution list
-                // ES_PostList00(Event2Post);
+                ES_PostList00(Event2Post);
                 // Change EventType to light leds indicating direction to put in
                 CurrentState = Standby;
-
-
             }
-                
+
             else if (ThisEvent.EventType == USERMVT_DETECTED) {
                 ES_Timer_InitTimer(USER_INPUT_TIMER, 30000);
                 puts("Resetting 30s timer.\r\n");
             }
-            // else if 60s timer expires
-            // else if change_temp event is posted
+
+            else if (ThisEvent.EventType == CHANGE_TEMP) {
+                Temperature += ThisEvent.EventParam;
+                SR_WriteTemperature(Temperature);
+            }
+
+            else if ((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == GAME_END_TIMER)) {
+                puts("Game over.\r\n");
+                ES_Event_t Event2Post;
+                Event2Post.EventType = GAME_OVER;
+                ES_PostList00(Event2Post);
+                Event2Post.EventType = PLAY_CLOSING_AUDIO;
+                Event2Post.EventParam = Temperature;
+                PostAudioService(Event2Post);
+                // stamp LEAF
+                CurrentState = GameOver;
+            }
             break;
+
+        case GameOver:
+            if ((ThisEvent.EventType == AUDIO_DONE) && (ThisEvent.EventParam == CLOSING_TRACK)) {
+                puts("Closing track done. \r\n");
+                // light up LEDs to indicate user to remove LEAF            
+            }
+            else if ((ThisEvent.EventType == LEAF_REMOVED) && (ThisEvent.EventParam == 1)) {
+                puts("LEAF removed. Resetting all games and going back to standby.");
+                SR_Write(0);
+                ES_Event_t Event2Post;
+                Event2Post.EventType = RESET_ALL_GAMES;
+                ES_PostList00(Event2Post);
+                CurrentState = Standby;
+            }
 
         default:
             puts("Error: GameManager entered unknown state.\r\n");
     }
-
     return ReturnEvent;
 }
 

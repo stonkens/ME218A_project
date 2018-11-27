@@ -15,7 +15,8 @@ typedef enum {
     InitGState,
     Standby,
     WelcomeMode,
-    GameActive
+    GameActive,
+    GameOver
 } GameManagerState;
 
 typedef enum {

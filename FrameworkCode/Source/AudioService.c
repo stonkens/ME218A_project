@@ -39,7 +39,7 @@ static const uint8_t TrackPorts[] = {TRACK0, TRACK1, TRACK2, TRACK3, TRACK4};
 static const uint8_t ALL_TRACKS = ~(TRACK0 & TRACK1 & TRACK2 & TRACK3 & TRACK4); // all HI
 static AudioState CurrentState = InitAudioState;
 static uint8_t CurrentTrack = 0;
-static uint8_t ActivityPinLastState = 1;
+static uint8_t ActivityPinLastState;
 
 bool InitAudioService(uint8_t Priority) {
     MyPriority = Priority;
@@ -49,6 +49,7 @@ bool InitAudioService(uint8_t Priority) {
     HWREG(GPIO_PORTF_BASE + GPIO_O_DEN) |= ~(RST & LOOP_TRACK);
     HWREG(GPIO_PORTF_BASE + GPIO_O_DIR) |= ~(RST & LOOP_TRACK);
     HWREG(GPIO_PORTF_BASE + GPIO_O_DEN) |= ACTIVITY_PIN;
+    ActivityPinLastState = HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) & ~ACTIVITY_PIN;
 
     // all tracks initially in OFF state
     HWREG(PORT_BASE + GPIO_O_DATA + ALL_BITS) |= ALL_TRACKS;
