@@ -18,13 +18,19 @@ typedef enum {
     GameActive
 } GameManagerState;
 
+typedef enum {
+	NoLeafInserted,
+	LeafInsertedWrong,
+	LeafInsertedCorrect
+} LEAFState;
+
 /**************************** Public Functions *******************************/
 
 bool InitGameManager(uint8_t Priority);
 bool PostGameManager(ES_Event_t ThisEvent);
 ES_Event_t RunGameManager(ES_Event_t ThisEvent);
 
-bool CheckLEAFInsertion(void);
+void CheckLEAFInsertion(void);
 
 
 #endif

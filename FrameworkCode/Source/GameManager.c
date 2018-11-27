@@ -25,16 +25,32 @@
 
 #include "AudioService.h"
 
+#define AD_VOLTAGE(x) (int(x*4095/3.3))
+
+#define REF_STATE1_HI 1.0
+#define REF_STATE2_LO 1.8
+#define REF_STATE2_HI 2.3
+#define REF_STATE3_LO 2.8
+
+
+#define REF_STATE1_HI_AD AD_VOLTAGE(REF_STATE1_HI) 
+#define REF_STATE2_LO_AD AD_VOLTAGE(REF_STATE2_LO) 
+#define REF_STATE2_HI_AD AD_VOLTAGE(REF_STATE2_HI) 
+#define REF_STATE3_LO_AD AD_VOLTAGE(REF_STATE3_LO)
+
 /****************************** Private Functions & Variables **************************/
-static uint8_t LEAFSwitchLastState;
+static uint8_t LEAFLastState;
 static uint8_t MyPriority;
 static GameManagerState CurrentState = InitGState;
 
+static uint32_t ReadLEAFState(void);
+
 bool InitGameManager(uint8_t Priority) {
     // initialize ports (already set to input by default)
-    HWREG(GPIO_PORTD_BASE + GPIO_O_DEN) |= LEAF_DETECTOR_PORT;
-    LEAFSwitchLastState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + ALL_BITS) & 
-        LEAF_DETECTOR_PORT;
+    // ports initialized in ADCMultiInit
+    // HWREG(GPIO_PORTD_BASE + GPIO_O_DEN) |= LEAF_DETECTOR_PORT;
+    // LEAFSwitchLastState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + ALL_BITS) & 
+    //    LEAF_DETECTOR_PORT;
     SR_Init();
     ES_Event_t InitEvent;
     InitEvent.EventType = ES_INIT;
@@ -60,7 +76,9 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
         case InitGState:
             if (ThisEvent.EventType == ES_INIT) {
                 puts("GameManager in standby mode.\r\n");
+                LEAFLastState = 1; //Corresponds to no LEAF
                 CurrentState = Standby;
+                // Change EventType to light leds indicating direction to insert
             }
             else 
                 puts("Error: did not receive ES_INIT event.\r\n");
@@ -68,13 +86,23 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
 
         case Standby:
-            if (ThisEvent.EventType == LEAF_IN_INCORRECT) {
+            if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 2)) 
+            {
                 puts("Reflectivity too high, LEAF inserted incorrectly.\r\n");
                 ES_Event_t Event2Post;
+                //Change EventType to light leds indicating direction
                 // Event2Post.EventType = PLAY_LEAF_ERROR_AUDIO;
                 // PostAudioService(Event2Post);
             }
-            else if (ThisEvent.EventType == LEAF_IN_CORRECT) {
+            else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 1)) 
+            {
+                puts("Reflectivity too high, LEAF inserted incorrectly.\r\n");
+                ES_Event_t Event2Post;
+                // Change EventType to light leds indicating direction to insert
+                
+            }
+            else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 3))  
+            {
                 // play welcoming audio
                 ES_Event_t Event2Post;
                 Event2Post.EventType = PLAY_AUDIO;
@@ -103,7 +131,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 ES_Timer_InitTimer(GAME_END_TIMER, 60000);
                 CurrentState = GameActive;
             }
-            else if (ThisEvent.EventType == LEAF_REMOVED) {
+            else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 1)) {
                 
                 // maybe add turn off all LED function to SR? --> Adds
                 SR_Write(0);
@@ -138,17 +166,33 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 }
             }
 
-            else if (((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
-                USER_INPUT_TIMER)) || (ThisEvent.EventType == LEAF_REMOVED)) {
+            else if ((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
+                USER_INPUT_TIMER))  
+            {
             /* else if (((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam ==
                 USER_INPUT_TIMER))) { */
-                puts("No user input detected for 30s, or LEAF removed. Resetting all games.\r\n");
+                puts("No user input detected for 30s, Resetting all games.\r\n");
                 SR_WriteTemperature(0);
                 ES_Event_t Event2Post;
                 Event2Post.EventType = RESET_ALL_GAMES;
                 // post event to distribution list
                 // ES_PostList00(Event2Post);
+                // Change EventType to light leds indicating direction to take out
                 CurrentState = Standby;
+            }
+
+            else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 1))
+            {
+                puts("User removed leaf, Resetting all games.\r\n");
+                SR_WriteTemperature(0);
+                ES_Event_t Event2Post;
+                Event2Post.EventType = RESET_ALL_GAMES;
+                // post event to distribution list
+                // ES_PostList00(Event2Post);
+                // Change EventType to light leds indicating direction to put in
+                CurrentState = Standby;
+
+
             }
                 
             else if (ThisEvent.EventType == USERMVT_DETECTED) {
@@ -181,52 +225,65 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 //     }
 // }
 
+//To be changed by Sander
+//3 events: LEAF_CORRECT, LEAF_WRONG, LEAF_REMOVED
+//4 thresholds V_lowmed_lo, V_lowmed_hi, V_medhi_lo, V_medhi_hi
+bool CheckLEAFInsertion() 
+{
+    ES_Event_t LeafEvent;
+    bool ReturnVal = false;
+    uint32_t LEAFCurrentValue;
+    static uint8_t LEAFCurrentState;
 
-bool CheckLEAFInsertion() {
-    uint8_t LEAFSwitchCurrentState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + 
-        ALL_BITS) & LEAF_DETECTOR_PORT;
-    if (LEAFSwitchCurrentState != LEAFSwitchLastState) {
-        ES_Event_t Event2Post;  
-        if (LEAFSwitchCurrentState)
-            Event2Post.EventType = LEAF_REMOVED;
-        else
-            Event2Post.EventType = LEAF_IN_CORRECT;
-        ES_PostToService(MyPriority, Event2Post);
-        LEAFSwitchLastState = LEAFSwitchCurrentState;
-        return true;
+    LEAFCurrentValue = ReadLEAFState();
+
+    if(LEAFCurrentValue < REF_STATE1_HI)
+    {
+        LEAFCurrentState = 1;
     }
-  
-/*  
-    uint8_t LEAF1CurrState = HWREG(GPIO_PORTD_BASE + GPIO_O_DATA + 
-        ALL_BITS) & LEAF_DETECTOR_PORT1;
-    if ((LEAF0CurrState != LEAF0LastState) || (LEAF1CurrState != LEAF1LastState)) {
-        ES_Event_t Event2Post;
-        if (LEAF0CurrState && LEAF1CurrState) {
-            // background is white
-            Event2Post.EventType = LEAF_IN_INCORRECT;
-        }
-        else if (!LEAF0CurrState && !LEAF1CurrState) {
-            // background is black and leaf is inserted correctly
-            LEAF0LastState = LEAF0CurrState;
-            LEAF1LastState = LEAF1CurrState;
-            Event2Post.EventType = LEAF_IN_CORRECT;
-        }
-        else {
-            if (LEAF0CurrState) {
-                // assuming LEAF_DETECTOR_PORT0 sets the lower threshold
-                puts("Error: something went wrong with LEAF detection.\r\n");
-                return false;
-            }
-            else {
-                // background is gray
-                Event2Post.EventType = LEAF_REMOVED;
-            }
-        }
-        ES_PostToService(MyPriority, Event2Post);
-        LEAF0LastState = LEAF0CurrState;
-        LEAF1LastState = LEAF1LastState;
-        return true;
-      }
-*/
-    return false;
+    else if((LEAFCurrentValue > REF_STATE2_LO) && (LEAFCurrentValue < REF_STATE2_HI))
+    {
+        LEAFCurrentState = 2;
+    }
+    else if(LEAFCurrentValue > REF_STATE3_LO)
+    {
+        LEAFCurrentState = 3;
+    }
+    if (LEAFCurrentState != LEAFLastState)
+    {
+        ReturnVal = true;
+        LeafEvent.EventType = LEAF_CHANGED;
+        LeafEvent.EventParam = LEAFCurrentState;
+        PostGameManager(LeafEvent);
+        LEAFLastState = LEAFCurrentState;
+    }
+
+    return ReturnVal;
+}
+
+/****************************************************************************
+ Function
+     ReadLEAFState
+
+ Parameters
+    Nothing
+
+ Returns
+    uint16_t returns state of solar panel
+
+ Description
+    Returns analog input pin of TIVA
+ Notes
+      
+ Author
+    Sander Tonkens, 11/1/18, 10:32
+****************************************************************************/
+static uint32_t ReadLEAFState(void)
+{
+  uint32_t LEAF_Position[2];
+  //Read analog input pin 
+  ADC_MultiRead(LEAF_Position); 
+  //printf("LEAF position: %d \r\n", LEAF_Position[1]);
+  //Leaf position corresponds to PE1 (2nd ADC channel)
+  return LEAF_Position[1];
 }
