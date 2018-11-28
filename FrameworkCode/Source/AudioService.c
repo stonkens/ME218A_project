@@ -20,18 +20,18 @@
 #include "inc/hw_sysctl.h"
 
 #define PORT_BASE GPIO_PORTE_BASE
-#define TRACK0 BIT2LO
+#define TRACK0 BIT4LO
 #define TRACK1 BIT3LO
 #define TRACK2 BIT3LO
 #define TRACK3 BIT4LO
 #define TRACK4 BIT5LO
 
 // port F
-#define ACTIVITY_PIN BIT4LO
+#define ACTIVITY_PIN BIT3LO
 #define LOOP_TRACK BIT2LO
-#define RST BIT3LO
+#define RST BIT4LO
 
-#define DEBOUNCE_TIME 500
+#define DEBOUNCE_TIME 300
 
 
 static uint8_t MyPriority;
@@ -48,8 +48,8 @@ bool InitAudioService(uint8_t Priority) {
     HWREG(PORT_BASE + GPIO_O_DIR) |= ALL_TRACKS;
     HWREG(GPIO_PORTF_BASE + GPIO_O_DEN) |= ~(RST & LOOP_TRACK);
     HWREG(GPIO_PORTF_BASE + GPIO_O_DIR) |= ~(RST & LOOP_TRACK);
-    HWREG(GPIO_PORTF_BASE + GPIO_O_DEN) |= ACTIVITY_PIN;
-    ActivityPinLastState = HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) & ~ACTIVITY_PIN;
+    HWREG(GPIO_PORTF_BASE + GPIO_O_DEN) |= ~ACTIVITY_PIN;
+    ActivityPinLastState = HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) & (~ACTIVITY_PIN);
 
     // all tracks initially in OFF state
     HWREG(PORT_BASE + GPIO_O_DATA + ALL_BITS) |= ALL_TRACKS;
@@ -95,6 +95,7 @@ ES_Event_t RunAudioService(ES_Event_t ThisEvent) {
             if ((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam 
                 == AUDIO_DEBOUNCE_TIMER)) {
                 HWREG(PORT_BASE + GPIO_O_DATA + ALL_BITS) |= (~TrackPorts[CurrentTrack]);
+                printf("debounce timer expired, pulling track %d hi\r\n", CurrentTrack);
             }
             else if (ThisEvent.EventType == AUDIO_DONE) {
                 puts("Track finished playing.\r\n");
@@ -135,8 +136,9 @@ bool CheckAudioStatus() {
     bool ReturnValue = false;
     uint8_t ActivityPinCurrState = HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) & ~ACTIVITY_PIN;
     // printf("acitivity pin curr state: %d\r\n", ActivityPinCurrState);
+    //if (!ActivityPinCurrState) 
+      //puts("act curr state lo");
     if (ActivityPinCurrState != ActivityPinLastState) {
-        puts("act pin changed.\r\n");
         if (ActivityPinCurrState) {
             // activity pin HI means track is done playing
             ES_Event_t Event2Post;

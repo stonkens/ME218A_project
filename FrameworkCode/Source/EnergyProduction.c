@@ -411,7 +411,7 @@ bool CheckSolarPanelPosition(void)
   
   
   static uint32_t CurrentSolarPanelVoltage;
-  static uint32_t SolarPanelArray[NBR_AVERAGE];
+  static uint32_t SolarPanelArray[NBR_AVERAGE] = {0};
 
   //Get CurrentSolarPanelVoltage from input line
   CurrentSolarPanelVoltage = ReadSolarPanelPosition();
