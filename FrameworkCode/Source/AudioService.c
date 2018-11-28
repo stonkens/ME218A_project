@@ -20,15 +20,15 @@
 #include "inc/hw_sysctl.h"
 
 #define PORT_BASE GPIO_PORTE_BASE
-#define TRACK0 BIT1LO
-#define TRACK1 BIT2LO
+#define TRACK0 BIT2LO
+#define TRACK1 BIT3LO
 #define TRACK2 BIT3LO
 #define TRACK3 BIT4LO
 #define TRACK4 BIT5LO
 
 // port F
-#define ACTIVITY_PIN BIT2LO
-#define LOOP_TRACK BIT4LO
+#define ACTIVITY_PIN BIT4LO
+#define LOOP_TRACK BIT2LO
 #define RST BIT3LO
 
 #define DEBOUNCE_TIME 500

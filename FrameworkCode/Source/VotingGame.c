@@ -168,7 +168,7 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                     CurrentQuestion = 0;
             }
 
-            else if (ThisEvent.EventType == RESET_ALL_GAMES) { 
+            else if ((ThisEvent.EventType == RESET_ALL_GAMES) || (ThisEvent.EventType == GAME_OVER)) { 
                 CurrentState = VStandby;
                 puts("Voting game going back to standby.\r\n");
             }

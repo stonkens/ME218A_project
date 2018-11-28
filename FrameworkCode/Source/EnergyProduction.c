@@ -54,6 +54,8 @@
 #define TEN_SEC (ONE_SEC*10)
 #define V_INCREMENT_FIVE_SEC 0 //To be changed
 
+
+
 // flexibility defines
 #define GPIO_PORT_EP GPIO_PORTA_BASE //configure A on electrical design
 
@@ -81,7 +83,9 @@ static EnergyGameState CurrentEnergyState;
 static uint32_t LastSolarPanelVoltage=0;
 static bool LastSmokeTowerState;
 static uint32_t V_sun = 2000;
-static uint32_t V_threshold = 500;
+static uint32_t V_threshold = 200;
+
+#define NBR_AVERAGE 5
 
 
 
@@ -417,13 +421,37 @@ bool CheckSolarPanelPosition(void)
   ES_Event_t ThisEvent;
   ES_Event_t AnyEvent;
   bool ReturnVal = false;
+  static uint8_t i=0;
+  uint32_t sum = 0;
+  uint32_t SolarPanelAverage = 0.0;
+  
+  
   static uint32_t CurrentSolarPanelVoltage;
+  static uint32_t SolarPanelArray[NBR_AVERAGE];
 
   //Get CurrentSolarPanelVoltage from input line
   CurrentSolarPanelVoltage = ReadSolarPanelPosition();
   
-
-  if(abs(CurrentSolarPanelVoltage-LastSolarPanelVoltage) >= V_threshold)
+  SolarPanelArray[i] = CurrentSolarPanelVoltage;
+  
+  int k;
+  for (k=0; k< NBR_AVERAGE; k++)
+  {
+    sum = sum + SolarPanelArray[k];
+  }
+  SolarPanelAverage = sum/NBR_AVERAGE;
+  if (i == NBR_AVERAGE -1)
+  {
+    i=0;
+  }
+  else
+  {
+    i+=1;
+  }
+  //printf("Current Average = %d \r \n", SolarPanelAverage);
+  
+  
+  if(abs(SolarPanelAverage-LastSolarPanelVoltage) >= V_threshold)
   {
     puts("Solarpanel position changed by threshold \r\n");
   	ThisEvent.EventType = ES_SOLARPOS_CHANGE;

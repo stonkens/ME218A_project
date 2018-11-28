@@ -10,6 +10,7 @@
 #include "GameManager.h"
 #include "ES_Framework.h"
 #include "ADMulti.h"
+#include "PWM16Tiva.h"
 
 // the headers to access the GPIO subsystem
 #include "inc/hw_memmap.h"
@@ -32,10 +33,10 @@
 
 #define AD_VOLTAGE(x) (int)(x*4095/3.3)
 
-#define REF_STATE1_HI 1.0
-#define REF_STATE2_LO 1.5
-#define REF_STATE2_HI 2.0
-#define REF_STATE3_LO 2.5
+#define REF_STATE1_HI 0.5
+#define REF_STATE2_LO 1.0
+#define REF_STATE2_HI 1.5
+#define REF_STATE3_LO 2.3
 
 #define REF_STATE1_HI_AD AD_VOLTAGE(REF_STATE1_HI) 
 #define REF_STATE2_LO_AD AD_VOLTAGE(REF_STATE2_LO) 
@@ -66,6 +67,7 @@ static GameManagerState CurrentState = InitGState;
 
 static uint32_t ReadLEAFState(void);
 static void BlinkNextLED(void);
+static void StampLEAF(void);
 static uint8_t BlinkLEAFLights = 0;
 
 bool InitGameManager(uint8_t Priority) {
@@ -92,7 +94,7 @@ bool PostGameManager(ES_Event_t ThisEvent) {
 
 ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
-    static int8_t Temperature = MAX_TEMP - 3;
+    static int8_t Temperature;
     static uint8_t NumOfActiveGames = 0;
     
     ES_Event_t ReturnEvent;
@@ -143,6 +145,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 printf("Posting audio event, param: %d\r\n", Event2Post.EventParam);
                 PostAudioService(Event2Post);
                 // turn on thermometer LEDs (starting at 7)
+                Temperature = MAX_TEMP - 2;
                 SR_WriteTemperature(Temperature);
                 puts("LEAF inserted correctly. Going into welcome mode.\r\n");
                 CurrentState = WelcomeMode;                
@@ -228,7 +231,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
             else if ((ThisEvent.EventType == LEAF_CHANGED) && (ThisEvent.EventParam == 1))
             {
                 puts("User removed leaf, Resetting all games.\r\n");
-                SR_Write(0);// SR_WriteTemperature(0);
+                SR_Write(0);
                 ES_Event_t Event2Post;
                 Event2Post.EventType = RESET_ALL_GAMES;
                 // post event to distribution list

@@ -45,7 +45,7 @@
 
 #define PERIOD 20000/0.8
 #define SERVO_CHANNEL 0
-#define MAX_RANGE 130
+#define MAX_RANGE 900
 #define NO_OF_INCREMENTS 12
 
 // module level defines
@@ -124,14 +124,16 @@ ES_Event_t RunSunMovement(ES_Event_t ThisEvent)
   // Default return event
   ES_Event_t ReturnEvent;
   ReturnEvent.EventType = ES_NO_EVENT;
-
-  static uint16_t SunPosition = (1000/180)*(180 - MAX_RANGE)/2;
+  // static uint16_t SunPosition = (1000/180)*(180 - MAX_RANGE)/2;
+  static uint16_t SunPosition;
 
   if (ThisEvent.EventType == ES_INIT) {
     puts("Initializing servo, setting to starting position\r\n");
+    SunPosition = (1000-MAX_RANGE)/2;
     PWM_TIVA_SetPeriod(PERIOD, SERVO_CHANNEL);
-    // PWM_TIVA_SetPulseWidth((1000 + SunPosition)/0.8, SERVO_CHANNEL);
-    PWM_TIVA_SetPulseWidth(1000/0.8, SERVO_CHANNEL);
+    PWM_TIVA_SetPulseWidth((2000-SunPosition)/0.8, SERVO_CHANNEL);
+    // PWM_TIVA_SetPulseWidth(1000/0.8, SERVO_CHANNEL);
+
   }
   else if (ThisEvent.EventType == ES_MOVE_SUN)
   {
@@ -139,20 +141,21 @@ ES_Event_t RunSunMovement(ES_Event_t ThisEvent)
     {
       // Move sun by 1/12th of a day
       // PWM_TIVA_SetPeriod(PERIOD, SERVO_CHANNEL);
-      SunPosition += (1000/180)*(MAX_RANGE/NO_OF_INCREMENTS);
-      if (SunPosition > (1000 * MAX_RANGE/180)) {
+      SunPosition += MAX_RANGE/NO_OF_INCREMENTS;
+      if (SunPosition > 1000){
         ReturnEvent.EventParam = ES_ERROR;
         puts("Error: sun position attempting to exceed max range.\r\n");
         return ReturnEvent;
       }
       printf("SunPosition in us is: %d\r\n", SunPosition);
-      PWM_TIVA_SetPulseWidth((1000 + SunPosition)/0.8, SERVO_CHANNEL);
+      PWM_TIVA_SetPulseWidth((2000 - SunPosition)/0.8, SERVO_CHANNEL);
     }
     else if (ThisEvent.EventParam == 1) //Reset all games
     {
       // Return sun to its initial position
-      SunPosition = (1000/180)*(180 - MAX_RANGE)/2;
-      PWM_TIVA_SetPulseWidth((1000 + SunPosition)/0.8, SERVO_CHANNEL);
+      // SunPosition = (1000/180)*(180 - MAX_RANGE)/2;
+      SunPosition = (1000-MAX_RANGE)/2;
+      PWM_TIVA_SetPulseWidth((2000 - SunPosition)/0.8, SERVO_CHANNEL);
       printf("Sun reset to initial position: %d.\r\n", SunPosition);
     }
   }
