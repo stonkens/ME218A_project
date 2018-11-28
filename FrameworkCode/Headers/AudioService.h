@@ -9,8 +9,14 @@
 #define AUDIO_SERVICE_H
 
 #define WELCOMING_TRACK 0
-#define COAL_AUDIO 2
-#define CLOSING_TRACK 1
+#define GAME2_INSTRUCTIONS 1
+#define GAME3_INSTRUCTIONS 2
+#define VOTED_RIGHT 3
+#define VOTED_WRONG 4
+#define FINAL_TEMP_4 5 
+#define FINAL_TEMP_3 6
+#define FINAL_TEMP_2 7
+#define FINAL_TEMP_1 8
 
 #include "ES_Events.h"
 #include "ES_Types.h"
