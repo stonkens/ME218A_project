@@ -33,9 +33,9 @@
 #define AD_VOLTAGE(x) (int)(x*4095/3.3)
 
 #define REF_STATE1_HI 1.0
-#define REF_STATE2_LO 1.8
-#define REF_STATE2_HI 2.3
-#define REF_STATE3_LO 2.8
+#define REF_STATE2_LO 1.5
+#define REF_STATE2_HI 2.0
+#define REF_STATE3_LO 2.5
 
 
 #define REF_STATE1_HI_AD AD_VOLTAGE(REF_STATE1_HI) 
@@ -82,7 +82,7 @@ bool PostGameManager(ES_Event_t ThisEvent) {
 
 ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
-    static int8_t Temperature = MAX_TEMP - 1;
+    static int8_t Temperature = MAX_TEMP - 3;
     static uint8_t NumOfActiveGames = 0;
     
     ES_Event_t ReturnEvent;
@@ -282,6 +282,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
 
                 CurrentState = Standby;
             }
+            break;
 
         default:
             puts("Error: GameManager entered unknown state.\r\n");

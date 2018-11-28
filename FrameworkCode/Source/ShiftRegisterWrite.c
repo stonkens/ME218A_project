@@ -57,7 +57,7 @@
 #define RCLK_LO BIT2LO
 #define RCLK_HI BIT2HI
 
-#define GET_LSB(x) (~x & 0x000001)
+#define GET_LOWEST(x) (~x & 0x000001)
 #define ALL_BITS (0xff<<2)
 
 #define SUN_MASK 0x0fffff
@@ -284,7 +284,7 @@ void SR_Write(uint32_t NewValue){
   for(BitCounter = 0; BitCounter < 24; ++BitCounter)
   {
     // isolate LSB of NewValue and output to port
-    CurrentBitEntry = GET_LSB(NewValue); //to be tested with ~, 0 should be lights on
+    CurrentBitEntry = GET_LOWEST(NewValue); //to be tested with ~, 0 should be lights on
     HWREG(GPIO_PORT+(GPIO_O_DATA+ALL_BITS)) &= DATA_LO;
     HWREG(GPIO_PORT+(GPIO_O_DATA+ALL_BITS)) |= CurrentBitEntry;
     // raise SCLK

@@ -26,7 +26,7 @@ static uint8_t MyPriority;
 static ES_Event_t DeferralQueue[3];
 
 static VotingGameState CurrentState = InitVState;
-static int8_t QuestionList[6] = {1, 2, 3, 4, 5, 6};
+//static int8_t QuestionList[6] = {1, 2, 3, 4, 5, 6};
 static int8_t QuestionYes[6] = {1, 0, 1, 1, 1, 0};
 static int8_t QuestionNo[6] = {0, 1, 0, 0, 0, 1};
 static uint8_t CurrentQuestion = 0;
@@ -79,7 +79,7 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) |= MOTOR_OFF;
                 ES_Timer_InitTimer(VOTE_TIMER, FIVE_SEC);
                 CurrentState = Waiting4Vote;
-                ES_DeferRecall(MyPriority, DeferralQueue);
+                ES_RecallEvents(MyPriority, DeferralQueue);
                 puts("New question is displayed. Waiting for user to vote.\r\n");
             }
             else if ((ThisEvent.EventType == VOTED_YES) || (ThisEvent.EventType == VOTED_NO)) {
@@ -87,7 +87,7 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 Event2Post.EventType = USERMVT_DETECTED;
                 PostGameManager(Event2Post);
             }
-            else if ((ThisEvent.EventType == RESET_ALL_GAMES) || (ThisEvent.EventType == GAME_OVER) {
+            else if ((ThisEvent.EventType == RESET_ALL_GAMES) || (ThisEvent.EventType == GAME_OVER)) {
                 ES_DeferEvent(DeferralQueue, ThisEvent);
             }
             break;

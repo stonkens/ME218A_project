@@ -221,7 +221,6 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
  
     case CoalPowered:
     {
-      puts("The energy grid is coal powered \r\n");
       if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SUN_POSITION_TIMER))
       {
         //Move sun to new position by calling that service
@@ -277,6 +276,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       else if(ThisEvent.EventType == RESET_ALL_GAMES)
       {
       	//1. Stop playing coalplant audio directly
+        puts("Resetting Energy game \r\n");
         ES_Event_t Event2Post;
         Event2Post.EventType = STOP_LOOP;
         PostAudioService(Event2Post);
@@ -290,13 +290,13 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       else if(ThisEvent.EventType == GAME_OVER)
       {
         CurrentEnergyState = EnergyGameOver;
+        puts("Energy game over.\r\n");
       }
     break;
     }
 
     case SolarPowered:
     {
-      puts("The energy grid is solar powered \r\n");
       if(ThisEvent.EventType == ES_TOWER_UNPLUGGED)
       {
         puts("Tower unplugged, move to CoalPowered state \r\n");
@@ -359,9 +359,10 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       }
       else if(ThisEvent.EventType == RESET_ALL_GAMES)
       {
+        puts("Resetting Energy game \r\n");
         //Move sun to initial position by calling that service
         MoveSunEvent.EventType = ES_MOVE_SUN;
-        MoveSunEvent.EventParam = 0;
+        MoveSunEvent.EventParam = 1;
         PostSunMovement(MoveSunEvent);
         CurrentEnergyState = EnergyStandBy;
 
@@ -369,6 +370,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       else if(ThisEvent.EventType == GAME_OVER)
       {
         CurrentEnergyState = EnergyGameOver;
+        puts("Energy game over.\r\n");
       }
     break;
     }	
@@ -379,7 +381,8 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         {
             //Move sun to initial position by calling that service
             MoveSunEvent.EventType = ES_MOVE_SUN;
-            MoveSunEvent.EventParam = 0;
+            puts("Energy game resetting sun position\r\n");
+            MoveSunEvent.EventParam = 1;
             PostSunMovement(MoveSunEvent);
             CurrentEnergyState = EnergyStandBy;
       }
