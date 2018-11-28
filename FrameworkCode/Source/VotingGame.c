@@ -120,12 +120,18 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 if(QuestionYes[CurrentQuestion] == 0)
                 {
                   puts("Wrong answer, increasing temperature by 1 \r \n");
-                  //Post play sad audio to audioservice TBD
+                  ES_Event_t AudioEvent;
+                  AudioEvent.EventType = PLAY_AUDIO;
+                  AudioEvent.EventParam = VOTED_WRONG;
+                  PostAudioService(AudioEvent);
                 }
                 else
                 {
                   puts("Correct answer, decreasing temperature by 1 \r \n");
-                  //Post play happy audio to audioservice TBD
+                  ES_Event_t AudioEvent;
+                  AudioEvent.EventType = PLAY_AUDIO;
+                  AudioEvent.EventParam = VOTED_RIGHT;
+                  PostAudioService(AudioEvent);
                 }
               
                 puts("Changing question.\r\n");

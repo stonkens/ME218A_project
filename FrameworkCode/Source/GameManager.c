@@ -47,7 +47,7 @@
 // defines for LEAF LED indicators
 #define INSERT 1
 #define REMOVE 2
-#define BLINK_TIME 1000
+#define BLINK_TIME 300
 
 #define LEAF_LED_PORT_BASE GPIO_PORTC_BASE
 #define LEAF_LED_TOP BIT4LO
@@ -164,7 +164,6 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 Event2Post.EventType = START_GAME;
                 Event2Post.EventParam = 1;
                 PostEnergyProduction(Event2Post);
-                // play audio instructions for game 1?
                 NumOfActiveGames ++;
                 puts("Starting first game.\r\n");
 
@@ -197,19 +196,24 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                     NumOfActiveGames ++;
                     ES_Event_t Event2Post;
                     Event2Post.EventType = START_GAME;
+                    ES_Event_t AudioEvent;
+                    AudioEvent.EventType = PLAY_AUDIO;
                     if (NumOfActiveGames == 2) {
                         ES_Timer_InitTimer(NEXT_GAME_TIMER, TEN_SEC);
                         Event2Post.EventParam = 2;
                         PostMeatSwitchDebounce(Event2Post);
-                        // play audio instructions for game 2?
+                        // play audio instructions for game 2
+                        AudioEvent.EventParam = GAME2_INSTRUCTIONS;
                         puts("10s timer expired: starting second game.\r\n");
                     }
                     else if (NumOfActiveGames == 3) {
                         Event2Post.EventParam = 3;
                         PostVotingGame(Event2Post);
-                        // play audio instructions for game 3?
+                        // play audio instructions for game 3
+                        AudioEvent.EventParam = GAME3_INSTRUCTIONS;
                         puts("10s timer expired: starting third game.\r\n");
                     }
+                    PostAudioService(AudioEvent);
                 }
             }
 
@@ -261,8 +265,15 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 ES_Event_t Event2Post;
                 Event2Post.EventType = GAME_OVER;
                 ES_PostList00(Event2Post);
-                Event2Post.EventType = PLAY_CLOSING_AUDIO;
-                Event2Post.EventParam = Temperature;
+                Event2Post.EventType = PLAY_AUDIO;
+                if (Temperature <= 2)
+                    Event2Post.EventParam = FINAL_TEMP_1;
+                else if (Temperature <= 4)
+                    Event2Post.EventParam = FINAL_TEMP_2;
+                else if (Temperature <= 6) 
+                    Event2Post.EventParam = FINAL_TEMP_3;
+                else if (Temperature <= 8)
+                    Event2Post.EventParam = FINAL_TEMP_4;
                 PostAudioService(Event2Post);
                 StampLEAF();
                 CurrentState = GameOver;
@@ -270,7 +281,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
             break;
 
         case GameOver:
-            if ((ThisEvent.EventType == AUDIO_DONE) && (ThisEvent.EventParam == CLOSING_TRACK)) {
+            if ((ThisEvent.EventType == AUDIO_DONE) && (ThisEvent.EventParam >= FINAL_TEMP_4) {
                 puts("Closing track done. \r\n");
                 // light up LEDs to indicate user to remove LEAF
                 BlinkLEAFLights = REMOVE;
