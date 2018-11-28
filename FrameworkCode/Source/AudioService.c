@@ -101,7 +101,7 @@ ES_Event_t RunAudioService(ES_Event_t ThisEvent) {
                 CurrentState = PlayingAudio;
             }
             else if (ThisEvent.EventType == PLAY_LOOP) {
-                HWREG(PORT_BASE + GPIO_O_DATA + ALL_BITS) &= LOOP_TRACK;
+                HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) &= LOOP_TRACK;
                 CurrentState = PlayingLoop;
                 CurrentTrack = LOOP_TRACK;
             }
@@ -141,7 +141,7 @@ ES_Event_t RunAudioService(ES_Event_t ThisEvent) {
 
         case PlayingLoop:
             if (ThisEvent.EventType == STOP_LOOP) {
-                HWREG(PORT_BASE + GPIO_O_DATA + ALL_BITS) |= ~LOOP_TRACK;
+                HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) |= ~LOOP_TRACK;
                 CurrentState = NoAudio;
                 CurrentTrack = 0;
             }
@@ -172,7 +172,7 @@ bool CheckAudioStatus() {
     return ReturnValue;
 }
 
-static bool AudioSRWriteLO(uint8_t Track) {
+static void AudioSRWriteLO(uint8_t Track) {
     HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) &= ~RCLK;
     for (int i=0; i < 16; i++) {
         if (i == Track) {
@@ -189,7 +189,7 @@ static bool AudioSRWriteLO(uint8_t Track) {
     HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) |= RCLK;
 }
 
-static bool AudioSRWriteHI(uint8_t Track) {
+static void AudioSRWriteHI(uint8_t Track) {
     HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) &= ~RCLK;
     for (int i=0; i < 16; i++) {
         if (i == Track) {

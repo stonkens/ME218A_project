@@ -14,6 +14,7 @@
 #include "ES_Framework.h"
 #include "GameManager.h"
 #include "ES_DeferRecall.h"
+#include "AudioService.h"
 
 // the headers to access the GPIO subsystem
 #include "inc/hw_memmap.h"

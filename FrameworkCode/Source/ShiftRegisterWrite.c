@@ -248,6 +248,7 @@ void SR_WriteTemperature(uint8_t NewValue)
   
   //update LEDs associated with Temperature display+call SR_Write
   UpdatedRegisterImage = ((LocalRegisterImage & TEMPERATURE_MASK)) | (TemperatureBinary<<TEMPERATURE_POS);
+  printf("In SR_WriteTemperature, Value to write SR_WRITE = %d \r\n", UpdatedRegisterImage);
   SR_Write(UpdatedRegisterImage);
   return;
 }
@@ -284,7 +285,7 @@ void SR_Write(uint32_t NewValue){
   for(BitCounter = 0; BitCounter < 24; ++BitCounter)
   {
     // isolate LSB of NewValue and output to port
-    CurrentBitEntry = GET_LOWEST(NewValue); //to be tested with ~, 0 should be lights on
+    CurrentBitEntry = GET_LSB(NewValue); //to be tested with ~, 0 should be lights on
     HWREG(GPIO_PORT+(GPIO_O_DATA+ALL_BITS)) &= DATA_LO;
     HWREG(GPIO_PORT+(GPIO_O_DATA+ALL_BITS)) |= CurrentBitEntry;
     // raise SCLK

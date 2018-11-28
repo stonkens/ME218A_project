@@ -33,10 +33,10 @@
 
 #define AD_VOLTAGE(x) (int)(x*4095/3.3)
 
-#define REF_STATE1_HI 0.5
-#define REF_STATE2_LO 1.0
-#define REF_STATE2_HI 1.5
-#define REF_STATE3_LO 2.3
+#define REF_STATE1_HI 0.3
+#define REF_STATE2_LO 0.6
+#define REF_STATE2_HI 1.8
+#define REF_STATE3_LO 2.5
 
 #define REF_STATE1_HI_AD AD_VOLTAGE(REF_STATE1_HI) 
 #define REF_STATE2_LO_AD AD_VOLTAGE(REF_STATE2_LO) 
@@ -281,7 +281,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
             break;
 
         case GameOver:
-            if ((ThisEvent.EventType == AUDIO_DONE) && (ThisEvent.EventParam >= FINAL_TEMP_4) {
+            if ((ThisEvent.EventType == AUDIO_DONE) && (ThisEvent.EventParam >= FINAL_TEMP_4)) {
                 puts("Closing track done. \r\n");
                 // light up LEDs to indicate user to remove LEAF
                 BlinkLEAFLights = REMOVE;
