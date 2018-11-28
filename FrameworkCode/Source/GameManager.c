@@ -37,12 +37,13 @@
 #define REF_STATE2_HI 2.0
 #define REF_STATE3_LO 2.5
 
-
 #define REF_STATE1_HI_AD AD_VOLTAGE(REF_STATE1_HI) 
 #define REF_STATE2_LO_AD AD_VOLTAGE(REF_STATE2_LO) 
 #define REF_STATE2_HI_AD AD_VOLTAGE(REF_STATE2_HI) 
 #define REF_STATE3_LO_AD AD_VOLTAGE(REF_STATE3_LO)
 
+
+// defines for LEAF LED indicators
 #define INSERT 1
 #define REMOVE 2
 #define BLINK_TIME 1000
@@ -51,6 +52,11 @@
 #define LEAF_LED_TOP BIT4LO
 #define LEAF_LED_MID BIT5LO
 #define LEAF_LED_BOT BIT6LO
+
+// defines for stamp mechanism
+#define INIT_ANGLE 90
+#define STAMP_ANGLE 70
+#define STAMP_CHANNEL 1 //PB7
 
 
 /****************************** Private Functions & Variables **************************/
@@ -64,9 +70,13 @@ static uint8_t BlinkLEAFLights = 0;
 
 bool InitGameManager(uint8_t Priority) {
     // LEAF IR detector port initialized in ADCMultiInit
+    // initialize LED ports
     HWREG(LEAF_LED_PORT_BASE + GPIO_O_DEN) |= ~(LEAF_LED_TOP & LEAF_LED_MID & LEAF_LED_BOT);
     HWREG(LEAF_LED_PORT_BASE + GPIO_O_DIR) |= ~(LEAF_LED_TOP & LEAF_LED_MID & LEAF_LED_BOT);
     SR_Init();
+    // set stamp servo to starting position
+    PWM_TIVA_SetPeriod(20000/0.8, STAMP_CHANNEL);
+    PWM_TIVA_SetPulseWidth((1000 + 1000*INIT_ANGLE/180)/0.8, STAMP_CHANNEL);
     MyPriority = Priority;
     ES_Event_t InitEvent;
     InitEvent.EventType = ES_INIT;
@@ -251,7 +261,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 Event2Post.EventType = PLAY_CLOSING_AUDIO;
                 Event2Post.EventParam = Temperature;
                 PostAudioService(Event2Post);
-                // stamp LEAF TBD
+                StampLEAF();
                 CurrentState = GameOver;
             }
             break;
@@ -373,4 +383,10 @@ static void BlinkNextLED() {
         HWREG(LEAF_LED_PORT_BASE + GPIO_O_DATA + ALL_BITS) &= LEDSequence[i];
         i++;
     }
+}
+
+static void StampLEAF() {
+    PWM_TIVA_SetPulseWidth((1000 + 1000*STAMP_ANGLE/180)/0.8, STAMP_CHANNEL);
+    puts("Stamping LEAF\r\n");
+    PWM_TIVA_SetPulseWidth((1000 + 1000*INIT_ANGLE/180)/0.8, STAMP_CHANNEL);
 }

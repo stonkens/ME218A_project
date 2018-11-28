@@ -168,27 +168,14 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                     CurrentQuestion = 0;
             }
 
-            else if (ThisEvent.EventType == GAME_OVER) {
-                CurrentState = VotingGameOver;
-            }
-
-            else if (ThisEvent.EventType == RESET_ALL_GAMES) {
+            else if (ThisEvent.EventType == RESET_ALL_GAMES) { 
                 CurrentState = VStandby;
-                puts("Resetting game.\r\n");
+                puts("Voting game going back to standby.\r\n");
             }
 
             break;
-
-        case VotingGameOver:
-            // user input will be ignored in this state
-            // some kind of indication that game is over TBD
-            if (ThisEvent.EventType == RESET_ALL_GAMES) {
-                CurrentState = VStandby;
-                puts("Game over; resetting game.\r\n");
-            }
-            break;
-
     }
+
     return ReturnEvent;
 }
 

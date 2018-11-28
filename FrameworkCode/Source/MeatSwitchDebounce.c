@@ -174,9 +174,10 @@ ES_Event_t RunMeatSwitchDebounceSM(ES_Event_t ThisEvent)
     }
     case(MeatActive):
     {
-      if(ThisEvent.EventType == RESET_ALL_GAMES)
+      if (ThisEvent.EventType == RESET_ALL_GAMES)
       {
         //No events triggered at the end of the game
+        puts("Meat game going back to standby.\r\n");
         GameStatus = MeatStandBy;
       }
       switch(CurrentButtonState)
@@ -192,7 +193,6 @@ ES_Event_t RunMeatSwitchDebounceSM(ES_Event_t ThisEvent)
         }
         
         case Ready2Sample:
-        {
           if(ThisEvent.EventType == DB_MEAT_SWITCH_UP)
           {
             ES_Timer_InitTimer(DEBOUNCE_TIMER, DebounceTime); 
@@ -207,13 +207,12 @@ ES_Event_t RunMeatSwitchDebounceSM(ES_Event_t ThisEvent)
             {
               //Turn 1 temperature LED off
               TemperatureChange.EventType = CHANGE_TEMP;
-              TemperatureChange.EventParam = 1;
+              TemperatureChange.EventParam = 0;
               puts("Temp down by 1, removed enough meat \r\n");
               PostGameManager(TemperatureChange);
             }
           }        
           break;
-        }
       }
     }
   }
