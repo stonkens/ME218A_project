@@ -13,6 +13,7 @@
 #include "VotingGame.h"
 #include "ES_Framework.h"
 #include "GameManager.h"
+#include "ES_DeferRecall.h"
 
 // the headers to access the GPIO subsystem
 #include "inc/hw_memmap.h"
@@ -22,6 +23,7 @@
 
 
 static uint8_t MyPriority;
+static ES_Event_t DeferralQueue[3];
 
 static VotingGameState CurrentState = InitVState;
 static int8_t QuestionList[6] = {1, 2, 3, 4, 5, 6};
@@ -31,10 +33,13 @@ static uint8_t CurrentQuestion = 0;
 
 bool InitVotingGame(uint8_t Priority) {
     MyPriority = Priority;
+    ES_InitDeferralQueueWith(DeferralQueue, ARRAY_SIZE(DeferralQueue));
+
     // make sure motor is off
     HWREG(GPIO_PORTF_BASE + GPIO_O_DEN) |= MOTOR_OFF;
     HWREG(GPIO_PORTF_BASE + GPIO_O_DIR) |= MOTOR_OFF;
     HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) |= MOTOR_OFF;
+
     // post ES_INIT event
     ES_Event_t InitEvent;
     InitEvent.EventType = ES_INIT;
@@ -74,12 +79,16 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) |= MOTOR_OFF;
                 ES_Timer_InitTimer(VOTE_TIMER, FIVE_SEC);
                 CurrentState = Waiting4Vote;
+                ES_DeferRecall(MyPriority, DeferralQueue);
                 puts("New question is displayed. Waiting for user to vote.\r\n");
             }
             else if ((ThisEvent.EventType == VOTED_YES) || (ThisEvent.EventType == VOTED_NO)) {
                 ES_Event_t Event2Post;
                 Event2Post.EventType = USERMVT_DETECTED;
                 PostGameManager(Event2Post);
+            }
+            else if ((ThisEvent.EventType == RESET_ALL_GAMES) || (ThisEvent.EventType == GAME_OVER) {
+                ES_DeferEvent(DeferralQueue, ThisEvent);
             }
             break;
 
@@ -89,7 +98,7 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 puts("No vote; changing question.\r\n");
                 HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) &= MOTOR_ON; 
                 CurrentQuestion += 1;
-                if (CurrentQuestion>=6)
+                if (CurrentQuestion >= 6)
                 {
                     CurrentQuestion = 0;
                 }
@@ -123,7 +132,7 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) &= MOTOR_ON;
                 CurrentState = ChangingQuestion;
                 CurrentQuestion += 1;
-                if (CurrentQuestion>=6)
+                if (CurrentQuestion >= 6)
                 {
                     CurrentQuestion = 0;
                 }
@@ -155,12 +164,30 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) &= MOTOR_ON;
                 CurrentState = ChangingQuestion;
                 CurrentQuestion += 1;
-                if (CurrentQuestion>=6)
-                {
+                if (CurrentQuestion >= 6)
                     CurrentQuestion = 0;
-                }
+            }
+
+            else if (ThisEvent.EventType == GAME_OVER) {
+                CurrentState = VotingGameOver;
+            }
+
+            else if (ThisEvent.EventType == RESET_ALL_GAMES) {
+                CurrentState = VStandby;
+                puts("Resetting game.\r\n");
+            }
+
+            break;
+
+        case VotingGameOver:
+            // user input will be ignored in this state
+            // some kind of indication that game is over TBD
+            if (ThisEvent.EventType == RESET_ALL_GAMES) {
+                CurrentState = VStandby;
+                puts("Game over; resetting game.\r\n");
             }
             break;
+
     }
     return ReturnEvent;
 }

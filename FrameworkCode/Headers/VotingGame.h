@@ -15,7 +15,8 @@ typedef enum {
     InitVState,
     VStandby,
     ChangingQuestion,
-    Waiting4Vote
+    Waiting4Vote,
+    VotingGameOver
 } VotingGameState;
 
 bool InitVotingGame(uint8_t Priority);
