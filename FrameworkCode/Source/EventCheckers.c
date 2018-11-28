@@ -136,7 +136,13 @@ bool Check4Keystroke(void)
     }
     else if (Key == 'z')
     {
-      SR_WriteTemperature(5);
+      HWREG(GPIO_PORTB_BASE + GPIO_O_DATA + ALL_BITS) &= BIT0LO;
+      puts("LO");
+    }
+    else if (Key == 'x')
+    {
+      HWREG(GPIO_PORTB_BASE + GPIO_O_DATA + ALL_BITS) |= BIT0HI;
+      puts("HI");
     }
     
     else {
