@@ -52,7 +52,8 @@
 #define ONE_SEC 1000
 #define FIVE_SEC (ONE_SEC*5)
 #define TEN_SEC (ONE_SEC*10)
-#define V_INCREMENT_FIVE_SEC 0 //To be changed
+#define V_INCREMENT_FIVE_SEC 0 //To be changed TBD
+#define V_SUN_START 1000 //To be adapted TBD
 
 
 
@@ -67,6 +68,7 @@
 //constants
 #define V_MEDIUMALIGNED 2000
 #define V_WELLALIGNED 1000
+#define NBR_AVERAGE 5
 
 
 
@@ -85,7 +87,7 @@ static bool LastSmokeTowerState;
 static uint32_t V_sun = 2000;
 static uint32_t V_threshold = 200;
 
-#define NBR_AVERAGE 5
+
 
 
 
@@ -247,17 +249,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         ES_Timer_InitTimer(COAL_ACTIVE_TIMER, FIVE_SEC);
         //to add in: Play "sad" audio tune TBD
       }
-      else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SOLAR_ACTIVE_TIMER))
-      {
-        //It could be that we changed to new state already whilst this event was still in the queue
-        //Turn 1 temperature LED off Will we keep this? TBD
-        TemperatureChange.EventType = CHANGE_TEMP;
-        TemperatureChange.EventParam = 0;
-        puts("Temp down by 1, enough solar energy produced\r\n");
-        PostGameManager(TemperatureChange);
-        //to add in: Play "happy" audio tune TBD
 
-      }
       else if(ThisEvent.EventType == ES_TOWER_PLUGGED)
       {
         puts("Tower plugged, move to SolarPowered state \r\n");
@@ -315,16 +307,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         CurrentEnergyState = CoalPowered;
         ES_Timer_InitTimer(COAL_ACTIVE_TIMER, FIVE_SEC);
       }
-      else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == COAL_ACTIVE_TIMER))
-      {
-        //It could be that we changed to new state already whilst this event was still in the queue
-        //Turn 1 temperature LED on
-        TemperatureChange.EventType = CHANGE_TEMP;
-        TemperatureChange.EventParam = 1;
-        puts("Temp up by 1, too long in coal power state\r\n");
-        PostGameManager(TemperatureChange);
-        //to add in: Play "sad" audio tune TBD
-      }
+
       else if((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == SOLAR_ACTIVE_TIMER))
       {
         //Turn 1 temperature LED off. Do we want to keep this? TBD
@@ -388,6 +371,7 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
             puts("Energy game resetting sun position\r\n");
             MoveSunEvent.EventParam = 1;
             PostSunMovement(MoveSunEvent);
+            V_sun = V_SUN_START;
             CurrentEnergyState = EnergyStandBy;
       }
     }
