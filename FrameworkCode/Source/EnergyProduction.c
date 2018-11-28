@@ -78,10 +78,10 @@ static uint8_t EvaluateSolarAlignment(void);
 // module level defines
 static uint8_t MyPriority;
 static EnergyGameState CurrentEnergyState;
-static uint32_t LastSolarPanelVoltage;
+static uint32_t LastSolarPanelVoltage=0;
 static bool LastSmokeTowerState;
 static uint32_t V_sun = 2000;
-static uint32_t V_threshold = 600;
+static uint32_t V_threshold = 500;
 
 
 
@@ -512,6 +512,7 @@ static uint32_t ReadSolarPanelPosition(void)
   //Read analog input pin 
   ADC_MultiRead(SolarPanelPosition); 
   //printf("Solar panel position: %d \r\n", SolarPanelPosition[0]);
+  //printf("Last solar panel position: %d \r \n", LastSolarPanelVoltage);
   return SolarPanelPosition[0];
 }
 

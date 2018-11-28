@@ -357,7 +357,7 @@ static void BlinkNextLED() {
         i = 0;
         return;
     }
-    puts("Blinking next light.\r\n");
+    // puts("Blinking next light.\r\n");
     uint8_t LEDSequence[3] = {LEAF_LED_TOP, LEAF_LED_MID, LEAF_LED_BOT};
     if (BlinkLEAFLights == REMOVE) {
         LEDSequence[0] = LEAF_LED_BOT;
