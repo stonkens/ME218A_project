@@ -10,6 +10,8 @@
 #define ONE_SEC 1000
 #define FIVE_SEC (ONE_SEC*5)
 
+#define SPIN_TIME 3000
+
 #include "VotingGame.h"
 #include "ES_Framework.h"
 #include "GameManager.h"
@@ -70,7 +72,8 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
             if ((ThisEvent.EventType == START_GAME) && (ThisEvent.EventParam == 3)) {
                 // drive motor
                 puts("Starting voting game; changing question.\r\n");
-                HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) &= MOTOR_ON;                 
+                HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) &= MOTOR_ON;
+                ES_Timer_InitTimer(MOTOR_TIMER, SPIN_TIME);
                 CurrentState = ChangingQuestion;
             }
             break;
@@ -83,6 +86,14 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 ES_RecallEvents(MyPriority, DeferralQueue);
                 puts("New question is displayed. Waiting for user to vote.\r\n");
             }
+            else if ((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == MOTOR_TIMER)) {
+                HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) |= MOTOR_OFF;
+                ES_Timer_InitTimer(VOTE_TIMER, FIVE_SEC);
+                CurrentState = Waiting4Vote;
+                ES_RecallEvents(MyPriority, DeferralQueue);
+                puts("New question is displayed. Waiting for user to vote.\r\n");
+            }
+              
             else if ((ThisEvent.EventType == VOTED_YES) || (ThisEvent.EventType == VOTED_NO)) {
                 ES_Event_t Event2Post;
                 Event2Post.EventType = USERMVT_DETECTED;
@@ -103,6 +114,7 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 {
                     CurrentQuestion = 0;
                 }
+                ES_Timer_InitTimer(MOTOR_TIMER, SPIN_TIME);
                 CurrentState = ChangingQuestion;
                 
             }
@@ -118,25 +130,25 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 TemperatureEvent.EventType = CHANGE_TEMP;
                 TemperatureEvent.EventParam = QuestionYes[CurrentQuestion];
                 PostGameManager(TemperatureEvent);
-                if(QuestionYes[CurrentQuestion] == 0)
+                ES_Event_t AudioEvent;
+                AudioEvent.EventType = PLAY_AUDIO;
+
+                if (QuestionYes[CurrentQuestion] == 0)
                 {
                   puts("Wrong answer, increasing temperature by 1 \r \n");
-                  ES_Event_t AudioEvent;
-                  AudioEvent.EventType = PLAY_AUDIO;
                   AudioEvent.EventParam = VOTED_WRONG;
-                  PostAudioService(AudioEvent);
+
                 }
                 else
                 {
                   puts("Correct answer, decreasing temperature by 1 \r \n");
-                  ES_Event_t AudioEvent;
-                  AudioEvent.EventType = PLAY_AUDIO;
                   AudioEvent.EventParam = VOTED_RIGHT;
-                  PostAudioService(AudioEvent);
                 }
+                PostAudioService(AudioEvent);
               
                 puts("Changing question.\r\n");
                 HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) &= MOTOR_ON;
+                ES_Timer_InitTimer(MOTOR_TIMER, SPIN_TIME);
                 CurrentState = ChangingQuestion;
                 CurrentQuestion += 1;
                 if (CurrentQuestion >= 6)
@@ -157,18 +169,24 @@ ES_Event_t RunVotingGame(ES_Event_t ThisEvent) {
                 TemperatureEvent.EventType = CHANGE_TEMP;
                 TemperatureEvent.EventParam = QuestionNo[CurrentQuestion];
                 PostGameManager(TemperatureEvent);
+                ES_Event_t AudioEvent;
+                AudioEvent.EventType = PLAY_AUDIO;
                 if(QuestionNo[CurrentQuestion] == 0)
                 {
                   puts("Wrong answer, increasing temperature by 1 \r \n");
                   //Post play sad audio to audioservice
+                  AudioEvent.EventParam = VOTED_WRONG;
                 }
                 else
                 {
                   puts("Correct answer, decreasing temperature by 1 \r \n");
                   //Post play happy audio to audioservice
+                  AudioEvent.EventParam = VOTED_RIGHT;
                 }
+                PostAudioService(AudioEvent);
                 puts("Changing question.\r\n");
                 HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) &= MOTOR_ON;
+                ES_Timer_InitTimer(MOTOR_TIMER, SPIN_TIME);
                 CurrentState = ChangingQuestion;
                 CurrentQuestion += 1;
                 if (CurrentQuestion >= 6)

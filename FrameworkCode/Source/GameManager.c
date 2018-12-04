@@ -27,14 +27,14 @@
 
 #define ONE_SEC 1000
 
-#define TEN_SEC (ONE_SEC*10)
+#define TEN_SEC (ONE_SEC*15)
 #define ONE_MINUTE (ONE_SEC*60)
 #define HALF_MINUTE (ONE_SEC*30)
 
 #define AD_VOLTAGE(x) (int)(x*4095/3.3)
 
-#define REF_STATE1_HI 0.3
-#define REF_STATE2_LO 0.6
+#define REF_STATE1_HI 0.8
+#define REF_STATE2_LO 1.1
 #define REF_STATE2_HI 1.8
 #define REF_STATE3_LO 2.5
 
@@ -56,7 +56,7 @@
 
 // defines for stamp mechanism
 #define INIT_ANGLE 90
-#define STAMP_ANGLE 70
+#define STAMP_ANGLE 180
 #define STAMP_CHANNEL 1 //PB7
 
 
@@ -67,7 +67,7 @@ static GameManagerState CurrentState = InitGState;
 
 static uint32_t ReadLEAFState(void);
 static void BlinkNextLED(void);
-static void StampLEAF(void);
+// static void StampLEAF(void);
 static uint8_t BlinkLEAFLights = 0;
 
 bool InitGameManager(uint8_t Priority) {
@@ -213,6 +213,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                         AudioEvent.EventParam = GAME3_INSTRUCTIONS;
                         puts("10s timer expired: starting third game.\r\n");
                     }
+                    puts("Posting play audio event\r\n");
                     PostAudioService(AudioEvent);
                 }
             }
@@ -275,7 +276,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
                 else if (Temperature <= 8)
                     Event2Post.EventParam = FINAL_TEMP_4;
                 PostAudioService(Event2Post);
-                StampLEAF();
+                PWM_TIVA_SetPulseWidth((1000 + 1000*STAMP_ANGLE/180)/0.8, STAMP_CHANNEL);
                 CurrentState = GameOver;
             }
             break;
@@ -283,6 +284,7 @@ ES_Event_t RunGameManager(ES_Event_t ThisEvent) {
         case GameOver:
             if ((ThisEvent.EventType == AUDIO_DONE) && (ThisEvent.EventParam >= FINAL_TEMP_4)) {
                 puts("Closing track done. \r\n");
+                PWM_TIVA_SetPulseWidth((1000 + 1000*INIT_ANGLE/180)/0.8, STAMP_CHANNEL);
                 // light up LEDs to indicate user to remove LEAF
                 BlinkLEAFLights = REMOVE;
                 BlinkNextLED();
@@ -399,8 +401,8 @@ static void BlinkNextLED() {
     }
 }
 
-static void StampLEAF() {
+/* static void StampLEAF() {
     PWM_TIVA_SetPulseWidth((1000 + 1000*STAMP_ANGLE/180)/0.8, STAMP_CHANNEL);
     puts("Stamping LEAF\r\n");
     PWM_TIVA_SetPulseWidth((1000 + 1000*INIT_ANGLE/180)/0.8, STAMP_CHANNEL);
-}
+} */

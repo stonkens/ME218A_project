@@ -32,14 +32,14 @@
 
 // port F
 #define ACTIVITY_PIN BIT3LO
-#define RST BIT2LO
+#define RST BIT4LO
 #define LOOP_TRACK BIT1LO
 #define NO_TRACKS 20
 
 #define DEBOUNCE_TIME 300
 
 static void AudioSRWriteLO(uint8_t Track);
-static void AudioSRWriteHI(uint8_t Track);
+static void AudioSRWriteHI(void);
 
 static uint8_t MyPriority;
 // static const uint8_t TrackPorts[] = {TRACK0, TRACK1, TRACK2, TRACK3, TRACK4};
@@ -55,15 +55,15 @@ bool InitAudioService(uint8_t Priority) {
     // HWREG(PORT_BASE + GPIO_O_DIR) |= ALL_TRACKS;
 
     // enable digital pins and set as output
-    HWREG(GPIO_PORTB_BASE + GPIO_O_DEN) |= (DATA | RCLK | SCLK);
-    HWREG(GPIO_PORTB_BASE + GPIO_O_DIR) |= (DATA | RCLK | SCLK);
+    HWREG(SR_PORT_BASE + GPIO_O_DEN) |= (DATA | RCLK | SCLK);
+    HWREG(SR_PORT_BASE + GPIO_O_DIR) |= (DATA | RCLK | SCLK);
     HWREG(GPIO_PORTF_BASE + GPIO_O_DEN) |= ~(RST & LOOP_TRACK);
     HWREG(GPIO_PORTF_BASE + GPIO_O_DIR) |= ~(RST & LOOP_TRACK);
     HWREG(GPIO_PORTF_BASE + GPIO_O_DEN) |= ~ACTIVITY_PIN;
     ActivityPinLastState = HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) & (~ACTIVITY_PIN);
     
     // start with the data & sclk lines low and the RCLK line high
-    HWREG(GPIO_PORTB_BASE + GPIO_O_DATA + ALL_BITS) = (DATA & SCLK) | RCLK;
+    HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) = (DATA & SCLK) | RCLK;
 
     // // all tracks initially in OFF state
     AudioSRWriteLO(NO_TRACKS);
@@ -88,7 +88,6 @@ ES_Event_t RunAudioService(ES_Event_t ThisEvent) {
             break;
 
         case NoAudio:
-            puts("waiting for audio instructions\r\n");
             if (ThisEvent.EventType == PLAY_AUDIO) {
                 CurrentTrack = ThisEvent.EventParam;
                 AudioSRWriteLO(CurrentTrack);
@@ -100,11 +99,13 @@ ES_Event_t RunAudioService(ES_Event_t ThisEvent) {
                 ES_Timer_InitTimer(AUDIO_DEBOUNCE_TIMER, DEBOUNCE_TIME);
                 CurrentState = PlayingAudio;
             }
+            /*
             else if (ThisEvent.EventType == PLAY_LOOP) {
                 HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) &= LOOP_TRACK;
                 CurrentState = PlayingLoop;
                 CurrentTrack = LOOP_TRACK;
             }
+            */
             break;
 
         case PlayingAudio:
@@ -112,7 +113,7 @@ ES_Event_t RunAudioService(ES_Event_t ThisEvent) {
                 == AUDIO_DEBOUNCE_TIMER)) {
                 // HWREG(PORT_BASE + GPIO_O_DATA + ALL_BITS) |= (~TrackPorts[CurrentTrack]);
                 printf("debounce timer expired, pulling track %d hi\r\n", CurrentTrack);
-                AudioSRWriteHI(CurrentTrack);
+                AudioSRWriteHI();
             }
             else if (ThisEvent.EventType == AUDIO_DONE) {
                 puts("Track finished playing.\r\n");
@@ -138,7 +139,7 @@ ES_Event_t RunAudioService(ES_Event_t ThisEvent) {
                 CurrentTrack = 0;
             }
             break;
-
+/*
         case PlayingLoop:
             if (ThisEvent.EventType == STOP_LOOP) {
                 HWREG(GPIO_PORTF_BASE + GPIO_O_DATA + ALL_BITS) |= ~LOOP_TRACK;
@@ -146,6 +147,7 @@ ES_Event_t RunAudioService(ES_Event_t ThisEvent) {
                 CurrentTrack = 0;
             }
             break;
+*/
     }
     return ReturnEvent;
 }
@@ -165,7 +167,7 @@ bool CheckAudioStatus() {
             PostAudioService(Event2Post);
             PostGameManager(Event2Post);
             ReturnValue = true;
-            puts("posting AUDIO DONE event.\r\n");
+            // puts("posting AUDIO DONE event.\r\n");
         }
         ActivityPinLastState = ActivityPinCurrState;
     }
@@ -178,9 +180,11 @@ static void AudioSRWriteLO(uint8_t Track) {
         if (i == Track) {
             // set bit corresponding to Track LO
             HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) &= ~DATA;
+            printf("i = %d LO\r\n", i);
         }
         else {
             HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) |= DATA;
+            printf("i = %d HI\r\n", i);
         }
         // pulse shift clock
         HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) |= SCLK;
@@ -189,16 +193,10 @@ static void AudioSRWriteLO(uint8_t Track) {
     HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) |= RCLK;
 }
 
-static void AudioSRWriteHI(uint8_t Track) {
+static void AudioSRWriteHI() {
     HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) &= ~RCLK;
     for (int i=0; i < 16; i++) {
-        if (i == Track) {
-            // set bit corresponding to Track HI
-            HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) |= DATA;
-        }
-        else {
-            HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) &= ~DATA;
-        }
+        HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) |= DATA;
         // pulse shift clock
         HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) |= SCLK;
         HWREG(SR_PORT_BASE + GPIO_O_DATA + ALL_BITS) &= ~SCLK;

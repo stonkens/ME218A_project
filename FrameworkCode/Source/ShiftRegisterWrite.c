@@ -187,6 +187,14 @@ void SR_WritePollution(uint8_t NewValue)
 {
   uint32_t PollutionBinary;
   PollutionBinary = SetXBits(NewValue);
+  if (PollutionBinary == 3)
+  {
+    PollutionBinary = 48;
+  }
+  else if (PollutionBinary == 15)
+  {
+    PollutionBinary = 60;
+  }
   //update LEDs associated with Pollution display+call SR_Write
   //LocalRegisterImage = ((LocalRegisterImage & POLLUTION_MASK) | (BitState<<x)
   UpdatedRegisterImage = ((LocalRegisterImage & POLLUTION_MASK)) | (PollutionBinary<<POLLUTION_POS);
@@ -216,7 +224,15 @@ void SR_WriteEnergy(uint8_t NewValue)
   //translate NewValue into bit state
   uint32_t EnergyBinary;
   EnergyBinary = SetXBits(NewValue);
-
+  if (EnergyBinary == 3)
+  {
+    EnergyBinary = 48;
+  }
+  else if (EnergyBinary == 15)
+  {
+    EnergyBinary = 60;
+  }
+  
   //update LEDs associated with Energy display+call SR_Write
   UpdatedRegisterImage = ((LocalRegisterImage & ENERGY_MASK)) | (EnergyBinary<<ENERGY_POS);
   SR_Write(UpdatedRegisterImage);

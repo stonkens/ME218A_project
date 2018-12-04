@@ -52,8 +52,9 @@
 #define ONE_SEC 1000
 #define FIVE_SEC (ONE_SEC*5)
 #define TEN_SEC (ONE_SEC*10)
-#define V_INCREMENT_FIVE_SEC 0 //To be changed TBD
-#define V_SUN_START 1000 //To be adapted TBD
+#define FIFTEEN_SEC (ONE_SEC*15)
+#define V_INCREMENT_FIVE_SEC 85
+#define V_SUN_START 1800 
 
 
 
@@ -66,9 +67,9 @@
 #define TOWER_LO BIT2LO
 
 //constants
-#define V_MEDIUMALIGNED 2000
-#define V_WELLALIGNED 1000
-#define NBR_AVERAGE 5
+#define V_MEDIUMALIGNED 300
+#define V_WELLALIGNED 150
+#define NBR_AVERAGE 10
 
 
 
@@ -84,8 +85,8 @@ static uint8_t MyPriority;
 static EnergyGameState CurrentEnergyState;
 static uint32_t LastSolarPanelVoltage=0;
 static bool LastSmokeTowerState;
-static uint32_t V_sun = 2000;
-static uint32_t V_threshold = 200;
+static uint32_t V_sun = 1800;
+static uint32_t V_threshold = 150; //change to maximum 300
 
 
 
@@ -209,9 +210,9 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         puts("Energy game started \r\n");
         //post event to game service to 
         //1. Play coalplant audio
-        ES_Event_t Event2Post;
-        Event2Post.EventType = PLAY_LOOP;
-        PostAudioService(Event2Post);
+//        ES_Event_t Event2Post;
+//        Event2Post.EventType = PLAY_LOOP;
+//        PostAudioService(Event2Post);
         //2. turn on pollution leds
         SR_WritePollution(6);
         //3. turn on energy leds with parameter all
@@ -255,9 +256,11 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         puts("Tower plugged, move to SolarPowered state \r\n");
         //post event to do the following:
         //1. Stop coalplant audio
+        /*
         ES_Event_t Event2Post;
         Event2Post.EventType = STOP_LOOP;
         PostAudioService(Event2Post);
+        */
         //2. Turn "low" polution leds
         SR_WritePollution(2);
         //3. Turn "low" energy leds
@@ -266,17 +269,19 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
         energy_level = EvaluateSolarAlignment();
         SR_WriteEnergy(2*energy_level);
         CurrentEnergyState = SolarPowered;
-        ES_Timer_InitTimer(SOLAR_ACTIVE_TIMER, TEN_SEC);
+        ES_Timer_InitTimer(SOLAR_ACTIVE_TIMER, FIFTEEN_SEC);
       }
 
       else if(ThisEvent.EventType == RESET_ALL_GAMES)
       {
       	//1. Stop playing coalplant audio directly
         puts("Resetting Energy game \r\n");
+        /*
         ES_Event_t Event2Post;
         Event2Post.EventType = STOP_LOOP;
         PostAudioService(Event2Post);
-      	//2. Function to reset sun to original position
+      	*/
+        //2. Function to reset sun to original position
       	MoveSunEvent.EventType = ES_MOVE_SUN;
       	MoveSunEvent.EventParam = 1;
       	PostSunMovement(MoveSunEvent);
@@ -297,9 +302,11 @@ ES_Event_t RunEnergyProductionSM(ES_Event_t ThisEvent)
       {
         puts("Tower unplugged, move to CoalPowered state \r\n");
         //1. Play coalplant audio
+        /*
         ES_Event_t Event2Post;
         Event2Post.EventType = PLAY_LOOP;
         PostAudioService(Event2Post);
+        */
         //2. Turn on pollution leds
         SR_WritePollution(6);
         //3. turn on energy leds with parameter all
@@ -551,7 +558,7 @@ static uint32_t ReadSolarPanelPosition(void)
 static void ChangeSunVoltage(void)
 {
   puts("Varying V_sun \r\n");
-	V_sun = V_sun + V_INCREMENT_FIVE_SEC;
+	V_sun = V_sun - V_INCREMENT_FIVE_SEC;
 	return;
 }
 

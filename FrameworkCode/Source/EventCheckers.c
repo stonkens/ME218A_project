@@ -134,16 +134,6 @@ bool Check4Keystroke(void)
       ThisEvent.EventParam = WELCOMING_TRACK;
       PostGameManager(ThisEvent);
     }
-    else if (Key == 'z')
-    {
-      HWREG(GPIO_PORTB_BASE + GPIO_O_DATA + ALL_BITS) &= BIT0LO;
-      puts("LO");
-    }
-    else if (Key == 'x')
-    {
-      HWREG(GPIO_PORTB_BASE + GPIO_O_DATA + ALL_BITS) |= BIT0HI;
-      puts("HI");
-    }
     
     else {
       ThisEvent.EventType = USERMVT_DETECTED;

@@ -45,7 +45,7 @@
 
 #define PERIOD 20000/0.8
 #define SERVO_CHANNEL 0
-#define MAX_RANGE 900
+#define MAX_RANGE 1000
 #define NO_OF_INCREMENTS 12
 
 // module level defines
